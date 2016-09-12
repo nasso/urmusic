@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Urmusic</title>
+		
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="css/style.css" />
+		<link rel="stylesheet" href="css/w3.css">
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript" src="watch.js"></script>
+		<script type="text/javascript" src="index.js"></script>
+	</head>
+	<body>
+		<div style="display: none;">
+			<a id="downloader"></a>
+			<input type="file" id="fileChooser" multiple />
+		</div>
+		
+		<canvas id="cvs"></canvas>
+		<audio id="audioElement" controls loop></audio>
+		
+		<nav id="settingsNav">
+			<header>
+				<div id="hambParent">
+					<div id="hamb" class="fa fa-bars w3-large"></div>
+				</div>
+				<h3>Settings</h3>
+				<span class="fa fa-angle-right w3-xlarge" id="presetMenuOpenCloseBtn"></span>
+			</header>
+			<div id="settingsPresetsMenu">
+				<div id="settingsPresetsMenuSizer">
+					<header>
+						<input type="text" placeholder="preset name" id="presetNameInput" />
+						<ul id="settingsPresetsOptions">
+							<li id="settingsPresetsOptOpen" class="fa fa-folder-open-o w3-xlarge"></li>
+							<li id="settingsPresetsOptSave" class="fa fa-floppy-o w3-xlarge"></li>
+						</ul>
+					</header>
+					<ul id="settingsPresetsList">
+					</ul>
+				</div>
+			</div>
+			<div id="settingsCtrlsContainer">
+				<div>
+					<ul id="globalSettings" class="settingsCtrlsList">
+					</ul>
+					<ul id="settingsSectionTabs">
+						<li id="addTab" class="fa fa-plus w3-medium"></li>
+					</ul>
+					<ul id="sectionSettings" class="settingsCtrlsList">
+					</ul>
+				</div>
+			</div>
+		</nav>
+	</body>
+</html>
