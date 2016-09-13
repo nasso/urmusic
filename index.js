@@ -246,7 +246,6 @@ var settingsPresets = {
 };
 
 var settings = new Settings();
-var hoverSection = null;
 
 var frameProps = {
 	maxval: 0,
@@ -583,30 +582,12 @@ var refreshControls = (function(){
 		}
 	};
 	
-	var actionTabOver = function(e) {
-		var index = -1;
-		var child = this;
-		while((child = child.previousSibling) != null)  index++;
-		
-		hoverSection = settings.sections[index];
-	};
-	
-	var actionTabOut = function(e) {
-		var pointerElem = document.elementFromPoint(e.clientX, e.clientY);
-		
-		if(!pointerElem || !pointerElem.classList.contains('sectionTab')) {
-			hoverSection = null;
-		}
-	};
-	
 	var actionAddTab = function(i) {
 		var tabLi = $("<li>")[0];
 		tabLi.innerHTML = i.toString();
 		tabLi.title = settings.sections[i].name;
 		tabLi.classList.add('sectionTab');
 		tabLi.addEventListener('click', actionTabClicked);
-		tabLi.addEventListener('mouseover', actionTabOver);
-		tabLi.addEventListener('mouseout', actionTabOut);
 		
 		secTabs.insertBefore(tabLi, addTabLi);
 		sectionControls[i] = createSectionControls(settings.sections[i]);
@@ -617,8 +598,6 @@ var refreshControls = (function(){
 		if(!e) return;
 		
 		e.removeEventListener('click', actionTabClicked);
-		e.removeEventListener('mouseover', actionTabOver);
-		e.removeEventListener('mouseout', actionTabOut);
 		
 		secTabs.removeChild(e);
 		
@@ -1010,22 +989,8 @@ $(function() {
 				
 				if(mode == drawMode.fill) {
 					gtx.fill();
-					
-					if(hoverSection === section) {
-						gtx.fillStyle = "red";
-						gtx.globalAlpha = 0.2;
-						gtx.fill();
-						gtx.globalAlpha = 1.0;
-					}
 				} else {
 					gtx.stroke();
-					
-					if(hoverSection === section) {
-						gtx.strokeStyle = "red";
-						gtx.globalAlpha = 0.2;
-						gtx.stroke();
-						gtx.globalAlpha = 1.0;
-					}
 				}
 			}
 			
