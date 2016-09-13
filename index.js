@@ -1017,10 +1017,10 @@ $(function() {
 		
 		console.log(
 			" _    _ ________     __  _ \n"
-		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable\n"
-		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"through the JavaScript console too! Have fun!\n"
+		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
+		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V0.9\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (http://nasso.github.io/)\n\n");
 		
 		loadPreset('DubstepGutter');
