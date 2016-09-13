@@ -641,6 +641,7 @@ $(function() {
 	
 	var img = new Image();
 	var audioElement = $("#audioElement")[0];
+	var helpNav = $('#helpNav')[0];
 	
 	function processImageFile(imageFile) {
 		if(!imageFile.type.match('image.*')) {
@@ -668,9 +669,13 @@ $(function() {
 		
 		reader.addEventListener('load', function(e) {
 			audioElement.src = e.target.result;
+			
+			audioElement.play();
 		});
 		
 		reader.readAsDataURL(soundFile);
+		
+		if(!helpNav.classList.contains("masked")) helpNav.classList.add("masked");
 	}
 	
 	function processFiles(files) {
