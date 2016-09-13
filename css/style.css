@@ -280,6 +280,8 @@ canvas {
 	-ms-user-select: none;
 	-o-user-select: none;
 	user-select: none;
+	
+	z-index: 100;
 }
 
 #settingsNav.activated #hamb {
@@ -307,6 +309,8 @@ canvas {
 	-o-transition: width 200ms, height 200ms;
 	-moz-transition: width 200ms, height 200ms;
 	-webkit-transition: width 200ms, height 200ms;
+	
+	z-index: 100;
 }
 
 #settingsNav.activated #settingsCtrlsContainer {
@@ -595,6 +599,8 @@ select.ctrlInput {
 	-webkit-transition: opacity 500ms;
 	
 	text-align: center;
+	
+	z-index: 50;
 }
 
 #helpNav.masked {
