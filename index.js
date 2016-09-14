@@ -3,14 +3,29 @@
 // Utils
 function isNullOrUndef(v) { return (v === null || v === undefined); }
 
+function EnumerationValue(ownerEnum, name) {
+	this.name = name;
+	this.ownerEnum = ownerEnum;
+}
+EnumerationValue.prototype.toJSON = function() {
+	return this.name;
+};
+EnumerationValue.prototype.toString = EnumerationValue.prototype.toJSON;
+
+function Enumeration(vals) {
+	if(!Array.isArray(vals)) {
+		throw new Error('No values specified for the Enumeration');
+	}
+	
+	for(var i = 0; i < vals.length; i++) {
+		this[vals[i]] = new EnumerationValue(this, vals[i]);
+	}
+}
+
 // The actual app
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
-var drawMode = {
-	lines: 0,
-	fill: 1,
-	outline: 2
-};
+var drawMode = new Enumeration(['LINES', 'FILL', 'OUTLINE']);
 var refreshables = {
 	SETTINGS_BIT: 1,
 	TABS_BIT: 2,
@@ -32,7 +47,12 @@ var exprArgs = [
 	'maxval',
 	'minval',
 	'time',
-	'duration'
+	'duration',
+	
+	'maxlowval',
+	'minlowval',
+	'maxhighval',
+	'minhighval'
 ];
 
 function numberProperty(v) {
@@ -68,7 +88,12 @@ function numberProperty(v) {
 					frameProps.maxval,
 					frameProps.minval,
 					frameProps.time,
-					frameProps.duration);
+					frameProps.duration,
+					
+					frameProps.maxlowval,
+					frameProps.minlowval,
+					frameProps.maxhighval,
+					frameProps.minhighval);
 			} catch(e) {
 				return 0;
 			}
@@ -91,6 +116,19 @@ function numberProperty(v) {
 	return p;
 }
 
+function AdvancedSettings(p) {
+	this.set(p);
+}
+AdvancedSettings.prototype.set = function(p) {
+	p = p || {};
+	
+	this.enableLowpass = !isNullOrUndef(p.enableLowpass) ? p.enableLowpass : false;
+	this.enableHighpass = !isNullOrUndef(p.enableHighpass) ? p.enableHighpass : false;
+	
+	this.lowpassFreq = !isNullOrUndef(p.lowpassFreq) ? p.lowpassFreq : 120;
+	this.highpassFreq = !isNullOrUndef(p.highpassFreq) ? p.highpassFreq : 480;
+};
+
 function Section(p) {
 	p = p || {};
 	
@@ -111,7 +149,7 @@ function Section(p) {
 	this.barsMinHeight = numberProperty(!isNullOrUndef(p.barsMinHeight) ? p.barsMinHeight : 0.01);
 	this.glowness = numberProperty(!isNullOrUndef(p.glowness) ? p.glowness : 0.0);
 	this.polar = numberProperty(!isNullOrUndef(p.polar) ? p.polar : 0.0);
-	this.mode = !isNullOrUndef(p.mode) ? p.mode : drawMode.lines;
+	this.mode = !isNullOrUndef(p.mode) ? drawMode[p.mode] : drawMode.LINES;
 	this.clampShapeToZero = !isNullOrUndef(p.clampShapeToZero) ? p.clampShapeToZero : true;
 	this.closeShape = !isNullOrUndef(p.closeShape) ? p.closeShape : true;
 	this.drawLast = !isNullOrUndef(p.drawLast) ? p.drawLast : true;
@@ -151,20 +189,29 @@ Settings.prototype.set = function(p) {
 	this.imageRot = numberProperty(!isNullOrUndef(p.imageRot) ? p.imageRot : 0);
 	
 	this.backgroundColor = !isNullOrUndef(p.backgroundColor) ? p.backgroundColor : '#3b3b3b';
+	
+	if(!this.advanced) this.advanced = new AdvancedSettings(p.advanced);
+	else this.advanced.set(p.advanced);
 };
 
 var settingsPresets = {
 	'Default': new Settings().addSection(),
-	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":0,"clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":0,"clampShapeToZero":true,"closeShape":true,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.01","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":0,"clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.01","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":0,"clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxval + 70) / 50, 0) * 3, 1)","globalOffsetX":"rand() * max((maxval + 70) / 50, 0) * 0.01 - 0.02","globalOffsetY":"rand() * max((maxval + 70) / 50, 0) * 0.01 - 0.02","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageRot":"0","backgroundColor":"#3b3b3b"}')),
-	'Rebellion': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":2,"clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":2,"clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":1,"clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":1,"clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageRot":"0","backgroundColor":"#3b3b3b"}')),
-	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","barCount":"256","freqStart":"0","freqEnd":"0.1","barsWidth":"0.5","barsStartX":"-1","barsEndX":"1","barsY":"0.2","color":"#ff0000","barsPow":"3","barsHeight":"-1","barsMinHeight":"-0.002","glowness":"64","polar":"0","mode":0,"clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
+	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3, 1)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"lowpassFreq":20,"enableHighpass":false,"highpassFreq":480}}')),
+	'Rebellion': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageRot":"0","backgroundColor":"#3b3b3b"}')),
+	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","barCount":"256","freqStart":"0","freqEnd":"0.1","barsWidth":"0.5","barsStartX":"-1","barsEndX":"1","barsY":"0.2","color":"#ff0000","barsPow":"3","barsHeight":"-1","barsMinHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
 };
 
 var settings = new Settings();
 
 var frameProps = {
 	maxval: 0,
-	minval: Number.MIN_SAFE_INTEGER
+	minval: Number.MIN_SAFE_INTEGER,
+	
+	maxlowval: 0,
+	minlowval: Number.MIN_SAFE_INTEGER,
+	
+	maxhighval: 0,
+	minhighval: Number.MIN_SAFE_INTEGER,
 };
 
 function loadFilePreset(f, setIt) {
@@ -193,6 +240,7 @@ function loadFilePreset(f, setIt) {
 
 var refreshControls = (function(){
 	var glblSettings = null;
+	var advcdSettings = null;
 	var secTabs = null;
 	var addTabLi = null;
 	var sectionSettingsUl = null;
@@ -313,10 +361,6 @@ var refreshControls = (function(){
 	
 	var createControlCombo = function(s, x, vals) {
 		var p = s[x];
-		
-		if(typeof p === 'object' || typeof p === 'function') {
-			return null;
-		}
 		
 		var li = $('<li>')[0];
 		var span = $('<span>')[0];
@@ -453,8 +497,8 @@ var refreshControls = (function(){
 		for(var x in s) {
 			var ctrl = null;
 			
-			if(x === 'mode') {
-				ctrl = createControlCombo(s, x, drawMode);
+			if(s[x] instanceof EnumerationValue) {
+				ctrl = createControlCombo(s, x, s[x].ownerEnum);
 			} else if(x === 'name') {
 				// Special case for name
 				ctrl = createSectionNameControl(s, x);
@@ -529,6 +573,16 @@ var refreshControls = (function(){
 			
 			if(ctrl) glblSettings.appendChild(ctrl);
 		}
+		
+		while(advcdSettings.children.length !== 0) {
+			advcdSettings.removeChild(advcdSettings.children[0]);
+		}
+		
+		for(var x in settings.advanced) {
+			var ctrl = createControl(settings.advanced, x);
+			
+			if(ctrl) advcdSettings.appendChild(ctrl);
+		}
 	};
 	
 	var refreshPresetList = function() {
@@ -561,6 +615,7 @@ var refreshControls = (function(){
 		}
 		
 		if(!glblSettings)		glblSettings = $("#globalSettings")[0];
+		if(!advcdSettings)		advcdSettings = $("#advancedSettings")[0];
 		if(!secTabs)			secTabs = $("#settingsSectionTabs")[0];
 		if(!addTabLi)			addTabLi = $("#addTab")[0];
 		if(!sectionSettingsUl)	sectionSettingsUl = $("#sectionSettings")[0];
@@ -636,6 +691,14 @@ $(function() {
 	var gainNode;
 	var analyser;
 	var freqData;
+	
+	var lowpass;
+	var lowAnalyser;
+	var lowFreqData;
+	
+	var highpass;
+	var highAnalyser;
+	var highFreqData;
 	
 	var imgReady = false;
 	
@@ -773,19 +836,53 @@ $(function() {
 	
 	function loop() {
 		analyser.smoothingTimeConstant = settings.smoothingTimeConstant.value;
+		lowAnalyser.smoothingTimeConstant = settings.smoothingTimeConstant.value;
+		highAnalyser.smoothingTimeConstant = settings.smoothingTimeConstant.value;
 		
 		if(!freqData) {
 			freqData = new Float32Array(analyser.frequencyBinCount);
 			
 			if(audioElement.paused) {
 				for(var i = 0; i < freqData.length; i++) {
-					freqData[i] = Number.MIN_SAFE_INTEGER
+					freqData[i] = Number.MIN_SAFE_INTEGER;
+				}
+			}
+		}
+		
+		if(settings.advanced.enableLowpass) {
+			if(!lowFreqData) {
+				lowFreqData = new Float32Array(lowAnalyser.frequencyBinCount);
+				
+				if(audioElement.paused) {
+					for(var i = 0; i < lowFreqData.length; i++) {
+						lowFreqData[i] = Number.MIN_SAFE_INTEGER;
+					}
+				}
+			}
+		}
+		
+		if(settings.advanced.enableHighpass) {
+			if(!highFreqData) {
+				highFreqData = new Float32Array(highAnalyser.frequencyBinCount);
+				
+				if(audioElement.paused) {
+					for(var i = 0; i < highFreqData.length; i++) {
+						highFreqData[i] = Number.MIN_SAFE_INTEGER;
+					}
 				}
 			}
 		}
 		
 		if(!audioElement.paused) {
 			analyser.getFloatFrequencyData(freqData);
+			
+			if(settings.advanced.enableLowpass) {
+				lowAnalyser.getFloatFrequencyData(lowFreqData);
+			}
+			
+			if(settings.advanced.enableHighpass) {
+				highAnalyser.getFloatFrequencyData(highFreqData);
+			}
 		}
 		
 		if(cvs.width != cvs.clientWidth || cvs.height != cvs.clientHeight) {
@@ -797,6 +894,16 @@ $(function() {
 		frameProps.maxval = Math.max.apply(Math, freqData);
 		frameProps.time = audioElement.currentTime;
 		frameProps.duration = audioElement.duration;
+		
+		if(settings.advanced.enableLowpass) {
+			frameProps.maxlowval = Math.max.apply(Math, lowFreqData);
+			frameProps.minlowval = Math.min.apply(Math, lowFreqData);
+		}
+		
+		if(settings.advanced.enableHighpass) {
+			frameProps.maxhighval = Math.max.apply(Math, highFreqData);
+			frameProps.minhighval = Math.min.apply(Math, highFreqData);
+		}
 		
 		render();
 		
@@ -892,7 +999,7 @@ $(function() {
 					
 					var p = getProps(cwidth, cheight, section, per);
 					
-					if(mode == drawMode.lines || (i == 0 && section.clampShapeToZero)) {
+					if(mode == drawMode.LINES || (i == 0 && section.clampShapeToZero)) {
 						gtx.moveTo(p.x, p.y);
 					}
 					
@@ -907,7 +1014,7 @@ $(function() {
 					gtx.closePath();
 				}
 				
-				if(mode == drawMode.fill) {
+				if(mode == drawMode.FILL) {
 					gtx.fill();
 				} else {
 					gtx.stroke();
@@ -942,8 +1049,20 @@ $(function() {
 		
 		audioSource = ctx.createMediaElementSource(audioElement);
 		gainNode = ctx.createGain();
+		
 		analyser = ctx.createAnalyser();
 		analyser.fftSize = 2048;
+		
+		
+		lowpass = ctx.createBiquadFilter();
+		lowpass.type = 'lowpass';
+		lowAnalyser = ctx.createAnalyser();
+		lowAnalyser.fftSize = 2048;
+		
+		highpass = ctx.createBiquadFilter();
+		highpass.type = 'highpass';
+		highAnalyser = ctx.createAnalyser();
+		highAnalyser.fftSize = 2048;
 		
 		cvs.width = document.body.clientWidth;
 		cvs.height = document.body.clientHeight;
@@ -1001,8 +1120,13 @@ $(function() {
 		
 		gainNode.gain.value = (audioElement.volume === 0 ? 0.0 : (1.0 / audioElement.volume));
 		
+		lowpass.connect(lowAnalyser);
+		highpass.connect(highAnalyser);
+		
 		audioSource.connect(gainNode);
 		gainNode.connect(analyser);
+		gainNode.connect(lowpass);
+		gainNode.connect(highpass);
 		audioSource.connect(ctx.destination);
 		
 		img.addEventListener('load', function() {
@@ -1014,6 +1138,16 @@ $(function() {
 			
 			return newval;
 		});
+		settings.advanced.watch('lowpassFreq', function(id, oldval, newval) {
+			lowpass.frequency.value = newval;
+			return newval;
+		});
+		settings.advanced.watch('highpassFreq', function(id, oldval, newval) {
+			highpass.frequency.value = newval;
+			return newval;
+		});
+		settings.advanced.lowpassFreq = settings.advanced.lowpassFreq;
+		settings.advanced.highpassFreq = settings.advanced.highpassFreq;
 		
 		console.log(
 			" _    _ ________     __  _ \n"
