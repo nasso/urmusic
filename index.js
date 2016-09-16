@@ -152,6 +152,7 @@ function Section(p) {
 	this.mode = !isNullOrUndef(p.mode) ? drawMode[p.mode] : drawMode.LINES;
 	this.clampShapeToZero = !isNullOrUndef(p.clampShapeToZero) ? p.clampShapeToZero : true;
 	this.closeShape = !isNullOrUndef(p.closeShape) ? p.closeShape : true;
+	this.smartFill = !isNullOrUndef(p.smartFill) ? p.smartFill : false;
 	this.drawLast = !isNullOrUndef(p.drawLast) ? p.drawLast : true;
 	this.quadratic = !isNullOrUndef(p.quadratic) ? p.quadratic : true;
 }
@@ -196,8 +197,8 @@ Settings.prototype.set = function(p) {
 
 var settingsPresets = {
 	'Default': new Settings().addSection(),
-	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3, 1)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"lowpassFreq":20,"enableHighpass":false,"highpassFreq":480}}')),
-	'Rebellion': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-54","maxDecibels":"-25","barCount":"128","freqStart":"0.015","freqEnd":"0.03","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#bdc3c7","barsPow":"2","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.25","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageRot":"0","backgroundColor":"#3b3b3b"}')),
+	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
+	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.02","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
 	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","barCount":"256","freqStart":"0","freqEnd":"0.1","barsWidth":"0.5","barsStartX":"-1","barsEndX":"1","barsY":"0.2","color":"#ff0000","barsPow":"3","barsHeight":"-1","barsMinHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
 };
 
@@ -318,14 +319,17 @@ var refreshControls = (function(){
 			input.placeholder = p.hasOwnProperty('expr') ? 'expression' : (typeof p);
 			
 			var val = p.toString();
-			if(val.startsWith('data:')) { // data url :p
-				input.value = 'DataURL';
+			
+			if(p.hasOwnProperty('expr')) {
+				input.value = p.expr;
 			} else {
-				if(p.hasOwnProperty('expr'))
-					input.value = p.expr;
-				else
+				if(val.startsWith('data:')) { // data url :p
+					input.value = 'DataURL';
+				} else {
 					input.value = p.toString();
+				}
 			}
+			
 		}
 		
 		input.addEventListener('change', function(){
@@ -649,13 +653,24 @@ var refreshControls = (function(){
 			});
 			
 			savePresetBtn.addEventListener('click', function(e) {
+				var newPresetName = presetNameIn.value ? presetNameIn.value : "untitled";
+				
 				// Download .urm
 				downloader.href = "data:text/plain;base64," + btoa(JSON.stringify(settings));
-				downloader.download = (presetNameIn.value ? presetNameIn.value : "untitled") + ".urm";
+				downloader.download = newPresetName + ".urm";
 				downloader.click();
+				
+				var counter = 0;
+				while(settingsPresets[newPresetName] !== undefined) {
+					newPresetName = (presetNameIn.value ? presetNameIn.value : "untitled") + ' (' + counter + ')';
+					counter++;
+				}
+				
+				settingsPresets[newPresetName] = new Settings(settings);
 				
 				refreshSettings();
 				refreshTabs();
+				refreshPresetList();
 			});
 			
 			initialized = true;
@@ -665,11 +680,21 @@ var refreshControls = (function(){
 		if((what & refreshables.TABS_BIT) !== 0) refreshTabs();
 		if((what & refreshables.PRESETLIST_BIT) !== 0) refreshPresetList();
 		
-		actionTabClicked.call(secTabs.children[0]);
+		if(secTabs.children[0]) actionTabClicked.call(secTabs.children[0]);
 	};
 })();
 
 function loadPreset(name) {
+	if(isNullOrUndef(name)) {
+		var names = [];
+		
+		for(var x in settingsPresets) {
+			names.push(x);
+		}
+		
+		name = names[Math.floor(Math.random() * names.length)];
+	}
+	
 	settings.set(settingsPresets[name]);
 	
 	refreshControls();
@@ -910,6 +935,30 @@ $(function() {
 		requestAnimationFrame(loop);
 	}
 	
+	function getFootProps(cwidth, cheight, section, per) {
+		var x = lerp(section.barsStartX, section.barsEndX, per);
+		var y = section.barsY;
+		
+		if(section.polar > 0.0) {
+			var cosx = Math.cos((x * 0.5 + 0.5) * Math.PI * 2);
+			var sinx = Math.sin((x * 0.5 + 0.5) * Math.PI * 2);
+			
+			var xp = cosx * y;
+			var yp = sinx * y;
+			
+			x = lerp(x * cwidth, xp * cwidth, section.polar);
+			y = lerp(y * cheight, yp * cheight, section.polar);
+		} else {
+			x *= cwidth;
+			y *= cheight;
+		}
+		
+		return {
+			x: x,
+			y: y
+		};
+	}
+	
 	function getProps(cwidth, cheight, section, per) {
 		var height = Math.pow(freqValue(per, section), section.barsPow) * section.barsHeight;
 		
@@ -1010,11 +1059,24 @@ $(function() {
 					}
 				}
 				
-				if(section.closeShape) {
+				if(section.closeShape && mode === drawMode.OUTLINE) { // Only affects outline mode
 					gtx.closePath();
 				}
 				
-				if(mode == drawMode.FILL) {
+				if(mode === drawMode.FILL) {
+					if(section.smartFill) {
+						for(var i = barCount - 1; i >= 0; i--) {
+							if(!section.drawLast && i === barCount - 1) {
+								continue;
+							}
+							
+							var per = i / (barCount - 1);
+							var fp = getFootProps(cwidth, cheight, section, per);
+							
+							gtx.lineTo(fp.x, fp.y);
+						}
+					}
+					
 					gtx.fill();
 				} else {
 					gtx.stroke();
@@ -1154,10 +1216,11 @@ $(function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0\n"
-		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (http://nasso.github.io/)\n\n");
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0.1\n"
+		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
-		loadPreset('DubstepGutter');
+		
+		loadPreset();
 		
 		loop();
 	}
