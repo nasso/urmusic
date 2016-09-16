@@ -295,9 +295,9 @@ var refreshControls = (function(){
 			return null;
 		}
 		
-		var li = $('<li>')[0];
-		var span = $('<span>')[0];
-		var input = $('<input>')[0];
+		var li = document.createElement('li');
+		var span = document.createElement('span');
+		var input = document.createElement('input');
 		
 		li.classList.add("settingsCtrl");
 		span.classList.add("ctrlName");
@@ -350,7 +350,7 @@ var refreshControls = (function(){
 		li.appendChild(input);
 		
 		if(typeof p === 'boolean') {
-			var chkbx = $('<span>')[0];
+			var chkbx = document.createElement('span');
 			chkbx.classList.add("ctrlCheckbox", "fa");
 			
 			chkbx.addEventListener('click', function(e) {
@@ -366,9 +366,9 @@ var refreshControls = (function(){
 	var createControlCombo = function(s, x, vals) {
 		var p = s[x];
 		
-		var li = $('<li>')[0];
-		var span = $('<span>')[0];
-		var select = $('<select>')[0];
+		var li = document.createElement('li');
+		var span = document.createElement('span');
+		var select = document.createElement('select');
 		
 		li.classList.add("settingsCtrl");
 		span.classList.add("ctrlName");
@@ -376,7 +376,7 @@ var refreshControls = (function(){
 		
 		span.innerHTML = x;
 		for(var h in vals) {
-			var opt = $('<option>')[0];
+			var opt = document.createElement('option');
 			opt.value = h;
 			opt.innerHTML = h;
 			
@@ -401,9 +401,9 @@ var refreshControls = (function(){
 	var createSectionNameControl = function(s, x) {
 		var p = s[x];
 		
-		var li = $('<li>')[0];
-		var input = $('<input>')[0];
-		var ul = $('<ul>')[0];
+		var li = document.createElement('li');
+		var input = document.createElement('input');
+		var ul = document.createElement('ul');
 		
 		li.classList.add("settingsMajorCtrl");
 		input.classList.add("ctrlMajorInput");
@@ -413,15 +413,15 @@ var refreshControls = (function(){
 		input.placeholder = x;
 		input.value = p.toString();
 		
-		var cloneLi = $('<li>')[0];
-		var deleteLi = $('<li>')[0];
-		var moveLi = $('<li>')[0];
+		var cloneLi = document.createElement('li');
+		var deleteLi = document.createElement('li');
+		var moveLi = document.createElement('li');
 		
 		cloneLi.classList.add("fa", "fa-clone", "w3-large", "ctrlOptClone");
 		deleteLi.classList.add("fa", "fa-trash-o", "w3-large", "ctrlOptDelete");
 		
-		var rightI = $('<i>')[0];
-		var leftI = $('<i>')[0];
+		var rightI = document.createElement('i');
+		var leftI = document.createElement('i');
 		
 		rightI.classList.add("fa", "fa-angle-right", "w3-small", "ctrlOptRight");
 		leftI.classList.add("fa", "fa-angle-left", "w3-small", "ctrlOptLeft");
@@ -429,7 +429,7 @@ var refreshControls = (function(){
 		moveLi.classList.add("ctrlOptMoves");
 		
 		moveLi.appendChild(rightI);
-		moveLi.appendChild($('<br>')[0]);
+		moveLi.appendChild(document.createElement('br'));
 		moveLi.appendChild(leftI);
 		
 		rightI.addEventListener('click', function() {
@@ -546,7 +546,7 @@ var refreshControls = (function(){
 	};
 	
 	var actionAddTab = function(i) {
-		var tabLi = $("<li>")[0];
+		var tabLi = document.createElement("li");
 		tabLi.innerHTML = i.toString();
 		tabLi.title = settings.sections[i].name;
 		tabLi.classList.add('sectionTab');
@@ -595,7 +595,7 @@ var refreshControls = (function(){
 		}
 		
 		for(var x in settingsPresets) {
-			var preset = $('<li>')[0];
+			var preset = document.createElement('li');
 			preset.innerHTML = x.toString(); // SHOULD be a string
 			
 			preset.addEventListener('click', (function() {
@@ -618,17 +618,17 @@ var refreshControls = (function(){
 			what = refreshables.SETTINGS_BIT | refreshables.TABS_BIT | refreshables.PRESETLIST_BIT;
 		}
 		
-		if(!glblSettings)		glblSettings = $("#globalSettings")[0];
-		if(!advcdSettings)		advcdSettings = $("#advancedSettings")[0];
-		if(!secTabs)			secTabs = $("#settingsSectionTabs")[0];
-		if(!addTabLi)			addTabLi = $("#addTab")[0];
-		if(!sectionSettingsUl)	sectionSettingsUl = $("#sectionSettings")[0];
-		if(!presetList)			presetList = $("#settingsPresetsList")[0];
-		if(!presetNameIn)		presetNameIn = $("#presetNameInput")[0];
-		if(!loadPresetBtn)		loadPresetBtn = $("#settingsPresetsOptOpen")[0];
-		if(!savePresetBtn)		savePresetBtn = $("#settingsPresetsOptSave")[0];
-		if(!downloader)			downloader = $('#downloader')[0];
-		if(!fileChooser)		fileChooser = $('#fileChooser')[0];
+		if(!glblSettings)		glblSettings = document.getElementById("globalSettings");
+		if(!advcdSettings)		advcdSettings = document.getElementById("advancedSettings");
+		if(!secTabs)			secTabs = document.getElementById("settingsSectionTabs");
+		if(!addTabLi)			addTabLi = document.getElementById("addTab");
+		if(!sectionSettingsUl)	sectionSettingsUl = document.getElementById("sectionSettings");
+		if(!presetList)			presetList = document.getElementById("settingsPresetsList");
+		if(!presetNameIn)		presetNameIn = document.getElementById("presetNameInput");
+		if(!loadPresetBtn)		loadPresetBtn = document.getElementById("settingsPresetsOptOpen");
+		if(!savePresetBtn)		savePresetBtn = document.getElementById("settingsPresetsOptSave");
+		if(!downloader)			downloader = document.getElementById('downloader');
+		if(!fileChooser)		fileChooser = document.getElementById('fileChooser');
 		
 		if(!initialized) {
 			addTabLi.addEventListener('click', function(e) {
@@ -700,7 +700,7 @@ function loadPreset(name) {
 	refreshControls();
 }
 
-$(function() {
+window.onload = function() {
 	var requestAnimationFrame =
 		window.requestAnimationFrame ||
 		window.mozRequestAnimationFrame ||
@@ -708,7 +708,7 @@ $(function() {
 		window.oRequestAnimationFrame ||
 		function(callback){ setTimeout(callback, 1000/60); };
 	
-	var cvs = $("#cvs")[0];
+	var cvs = document.getElementById("cvs");
 	var gtx = cvs.getContext('2d');
 	var ctx = new AudioContext();
 	
@@ -728,8 +728,11 @@ $(function() {
 	var imgReady = false;
 	
 	var img = new Image();
-	var audioElement = $("#audioElement")[0];
-	var helpNav = $('#helpNav')[0];
+	var audioElement = document.getElementById("audioElement");
+	var helpNav = document.getElementById('helpNav');
+	
+	var firefoxIsBetter = document.getElementById('firefoxIsBetter');
+	var closeWarning = firefoxIsBetter.getElementsByClassName('close')[0];
 	
 	function processImageFile(imageFile) {
 		if(!imageFile.type.match('image.*')) {
@@ -1101,6 +1104,12 @@ $(function() {
 		gtx.restore();
 	}
 	
+	function warnIfNotFirefox() {
+		if(navigator.userAgent.indexOf('Firefox/') === -1) {
+			firefoxIsBetter.style.marginRight = '0px';
+		}
+	}
+	
 	function init() {
 		if(!cvs || !gtx || !ctx) {
 			alert("Your browser isn't compatible"); 
@@ -1157,11 +1166,11 @@ $(function() {
 		
 		audioElement.crossOrigin = "anonymous";
 		
-		var setNav = $('#settingsNav')[0];
-		var presetMenuOpenCloseBtn = $('#presetMenuOpenCloseBtn')[0];
-		var presetMenu = $('#settingsPresetsMenu')[0];
+		var setNav = document.getElementById('settingsNav');
+		var presetMenuOpenCloseBtn = document.getElementById('presetMenuOpenCloseBtn');
+		var presetMenu = document.getElementById('settingsPresetsMenu');
 		
-		$('#hambParent').on('click', function(e) {
+		document.getElementById('hambParent').addEventListener('click', function(e) {
 			setNav.classList.contains('activated') ? setNav.classList.remove('activated') : setNav.classList.add('activated');
 			
 			if(!setNav.classList.contains('activated')) {
@@ -1178,6 +1187,9 @@ $(function() {
 				this.classList.add('opened');
 				presetMenu.classList.add('opened');
 			}
+		});
+		closeWarning.addEventListener('click', function() {
+			firefoxIsBetter.style.marginRight = '';
 		});
 		
 		gainNode.gain.value = (audioElement.volume === 0 ? 0.0 : (1.0 / audioElement.volume));
@@ -1219,11 +1231,12 @@ $(function() {
 		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0.1\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
-		
 		loadPreset();
 		
 		loop();
+		
+		warnIfNotFirefox();
 	}
 	
 	init();
-});
+};

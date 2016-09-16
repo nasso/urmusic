@@ -592,7 +592,7 @@ select.ctrlInput {
 	top: 50%;
 	
 	padding: 16px 0px;
-	background: rgba(0, 0, 0, 0.6);
+	background: rgba(0, 0, 0, 0.4);
 	
 	transform: translateY(-50%);
 	-o-transform: translateY(-50%);
@@ -620,7 +620,7 @@ select.ctrlInput {
 	margin: 8px 0px;
 	
 	color: white;
-	background: rgba(0, 0, 0, 0.8);
+	background: rgba(0, 0, 0, 0.9);
 }
 
 #helpNav p {
@@ -650,4 +650,77 @@ select.ctrlInput {
 	
 	font-size: 1.3em;
 	font-weight: bold;
+}
+
+.warningMessage {
+	display: inline-block;
+	
+	position: fixed;
+	right: 0px;
+	bottom: 50px;
+	
+	width: 350px;
+	
+	margin-right: -350px;
+	
+	transition: margin-right 100ms;
+	-o-transition: margin-right 100ms;
+	-moz-transition: margin-right 100ms;
+	-webkit-transition: margin-right 100ms;
+}
+
+.warningMessage header {
+	position: relative;
+	
+	display: inline-block;
+	width: 100%;
+
+	margin: 0px;
+	padding: 4px 8px;
+	
+	background: rgba(0, 0, 0, 0.8);
+}
+
+.warningMessage header .warnIcon {
+	display: inline-block;
+	
+	margin: 4px;
+}
+
+.warningMessage header .close {
+	position: absolute;
+	right: 0%;
+	top: 50%;
+	
+	margin-right: 8px;
+	
+	padding: 4px;
+	
+	transform: translateY(-50%);
+	-o-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-webkit-transform: translateY(-50%);
+	
+	transition: color 100ms;
+	-o-transition: color 100ms;
+	-moz-transition: color 100ms;
+	-webkit-transition: color 100ms;
+}
+
+.warningMessage header .close:hover {
+	color: #e74c3c;
+}
+
+.warningMessage header h5 {
+	display: inline-block;
+	
+	margin: 0px;
+}
+
+.warningMessage p {
+	padding: 16px;
+	
+	text-align: justify;
+	
+	background: rgba(0, 0, 0, 0.5);
 }
