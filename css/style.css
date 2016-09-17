@@ -724,3 +724,76 @@ select.ctrlInput {
 	
 	background: rgba(0, 0, 0, 0.5);
 }
+
+#musicApps {
+	display: inline-block;
+	
+	position: fixed;
+	top: 0%;
+	right: 0%;
+}
+
+.musicAppIcon {
+	display: block;
+	
+	width: 48px;
+	height: 48px;
+	
+	position: relative;
+	
+	line-height: 48px;
+	vertical-align: middle;
+	text-align: center;
+	
+	float: left;
+	
+	transition: color 100ms, background-color 100ms, margin-right 200ms;
+	-o-transition: color 100ms, background-color 100ms, margin-right 200ms;
+	-moz-transition: color 100ms, background-color 100ms, margin-right 200ms;
+	-webkit-transition: color 100ms, background-color 100ms, margin-right 200ms;
+}
+
+.musicAppIconContainer {
+	margin-right: -250px;
+	
+	transition: margin-right 200ms;
+	-o-transition: margin-right 200ms;
+	-moz-transition: margin-right 200ms;
+	-webkit-transition: margin-right 200ms;
+}
+
+.musicAppIconContainer.activated {
+	margin-right: 0px;
+}
+
+.musicAppIconContainer .appLinkForm {
+	display: inline-block;
+	width: 250px;
+	height: 48px;
+	background-color: rgba(0, 0, 0, 0.5);
+	
+	text-align: center;
+}
+
+.musicAppIconContainer .appLinkInput {
+	display: inline-block;
+	
+	background: rgba(0, 0, 0, 0.5);
+	border: 2px solid rgba(255, 255, 255, 0.2);
+	
+	border-radius: 4px;
+	padding: 4px 8px;
+	
+	width: 220px;
+	height: 32px;
+	
+	margin-top: 7px;
+}
+
+.musicAppIcon:hover, .musicAppIconContainer.activated .musicAppIcon {
+	background-color: rgba(0, 0, 0, 0.5);
+}
+
+#soundcloudApp:hover, #soundcloudApp.activated {
+	color: #f50;
+}

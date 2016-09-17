@@ -59,8 +59,8 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 }
 
 function isNullOrUndef(v) { return (v === null || v === undefined); }
-
 function EnumerationValue(ownerEnum, name) {
+
 	this.name = name;
 	this.ownerEnum = ownerEnum;
 }
@@ -769,6 +769,7 @@ window.onload = function() {
 	var cvs = document.getElementById("cvs");
 	var gtx = cvs.getContext('2d');
 	var ctx = new AudioContext();
+	var scClientID = '09bfcfe5b0303000a41b9e9675c0cb47';
 	
 	var audioSource;
 	var gainNode;
@@ -807,6 +808,15 @@ window.onload = function() {
 		reader.readAsDataURL(imageFile);
 	}
 	
+	function processAudioDataURL(title, theurl) {
+		audioElement.src = theurl;
+		document.title = "Urmusic - " + title;
+		
+		audioElement.play();
+		
+		if(!helpNav.classList.contains("masked")) helpNav.classList.add("masked");
+	}
+	
 	function processAudioFile(soundFile) {
 		if(!soundFile.type.match('audio.*')) {
 			return;
@@ -814,17 +824,12 @@ window.onload = function() {
 		
 		var reader = new FileReader();
 		var fileName = soundFile.name.substr(0, soundFile.name.lastIndexOf('.'));
-		document.title = "Urmusic - " + fileName;
 		
 		reader.addEventListener('load', function(e) {
-			audioElement.src = e.target.result;
-			
-			audioElement.play();
+			processAudioDataURL(filename, e.target.result);
 		});
 		
 		reader.readAsDataURL(soundFile);
-		
-		if(!helpNav.classList.contains("masked")) helpNav.classList.add("masked");
 	}
 	
 	function processFiles(files) {
@@ -1188,6 +1193,55 @@ window.onload = function() {
 		}
 	}
 	
+	function initSoundCloud() {		
+		SC.initialize({
+			client_id: scClientID
+		});
+		
+		var scInput = document.getElementById('soundcloudApp').parentNode.getElementsByClassName('appLinkInput')[0];
+		scInput.addEventListener('change', function() {
+			SC.resolve(this.value).then(function(s) {
+				var xhr = new XMLHttpRequest();
+				xhr.onload = function(e) {
+					processAudioDataURL(s.title, e.target.responseURL);
+				};
+				xhr.open('GET', s.stream_url + "?client_id="+scClientID);
+				xhr.send();
+			});
+		});
+	}
+	
+	function initApps() {
+		var appsIcons = document.getElementsByClassName("musicAppIcon");
+		for(var i = 0; i < appsIcons.length; i++) {
+			var appDivContainer = document.createElement('div');
+			var urlformdiv = document.createElement('div');
+			var urlinput = document.createElement('input');
+			var appIcon = appsIcons[i];
+			var parent = appIcon.parentNode;
+			
+			parent.removeChild(appIcon);
+			appDivContainer.classList.add('musicAppIconContainer');
+			appDivContainer.appendChild(appIcon);
+			parent.appendChild(appDivContainer);
+			
+			urlinput.placeholder = "Paste a link...";
+			
+			urlformdiv.appendChild(urlinput);
+			
+			urlformdiv.classList.add('appLinkForm');
+			urlinput.classList.add('appLinkInput');
+			
+			appDivContainer.appendChild(urlformdiv);
+			
+			appIcon.addEventListener('click', function() {
+				appDivContainer.classList.contains('activated') ? appDivContainer.classList.remove('activated') : appDivContainer.classList.add('activated');
+			});
+		}
+		
+		initSoundCloud();
+	}
+	
 	function init() {
 		if(!cvs || !gtx || !ctx) {
 			alert("Your browser isn't compatible"); 
@@ -1201,7 +1255,6 @@ window.onload = function() {
 		
 		analyser = ctx.createAnalyser();
 		analyser.fftSize = 2048;
-		
 		
 		lowpass = ctx.createBiquadFilter();
 		lowpass.type = 'lowpass';
@@ -1301,12 +1354,14 @@ window.onload = function() {
 		settings.advanced.lowpassFreq = settings.advanced.lowpassFreq;
 		settings.advanced.highpassFreq = settings.advanced.highpassFreq;
 		
+		initApps();
+		
 		console.log(
 			" _    _ ________     __  _ \n"
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0.1\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.0.2\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
