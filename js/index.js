@@ -46,6 +46,18 @@ if (!Object.prototype.unwatch) {
 	});
 }
 
+CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+	if (w < 2 * r) r = w / 2;
+	if (h < 2 * r) r = h / 2;
+	this.beginPath();
+	this.moveTo(x+r, y);
+	this.arcTo(x+w, y,   x+w, y+h, r);
+	this.arcTo(x+w, y+h, x,   y+h, r);
+	this.arcTo(x,   y+h, x,   y,   r);
+	this.arcTo(x,   y,   x+w, y,   r);
+	this.closePath();
+}
+
 function isNullOrUndef(v) { return (v === null || v === undefined); }
 
 function EnumerationValue(ownerEnum, name) {
@@ -232,6 +244,7 @@ Settings.prototype.set = function(p) {
 	this.imageY = numberProperty(!isNullOrUndef(p.imageY) ? p.imageY : 0);
 	this.imageWidth = numberProperty(!isNullOrUndef(p.imageWidth) ? p.imageWidth : 0.4);
 	this.imageHeight = numberProperty(!isNullOrUndef(p.imageHeight) ? p.imageHeight : 0.4);
+	this.imageBorderRadius = numberProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
 	this.imageRot = numberProperty(!isNullOrUndef(p.imageRot) ? p.imageRot : 0);
 	
 	this.backgroundColor = !isNullOrUndef(p.backgroundColor) ? p.backgroundColor : '#3b3b3b';
@@ -242,8 +255,8 @@ Settings.prototype.set = function(p) {
 
 var settingsPresets = {
 	'Default': new Settings().addSection(),
-	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
-	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
+	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageBorderRadius":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
+	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageBorderRadius":"0.8","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
 	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","barCount":"256","freqStart":"0","freqEnd":"0.1","barsWidth":"0.5","barsStartX":"-1","barsEndX":"1","barsY":"0.2","color":"#ff0000","barsPow":"3","barsHeight":"-1","barsMinHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
 };
 
@@ -1132,7 +1145,7 @@ window.onload = function() {
 			}
 			
 			if(imgReady) {
-				gtx.shadowColor = 'rgba(0, 0, 0, 0)'
+				gtx.shadowColor = 'rgba(0, 0, 0, 0)';
 				gtx.shadowBlur = 0;
 				
 				var imgw = settings.imageWidth.value;
@@ -1140,11 +1153,31 @@ window.onload = function() {
 				
 				gtx.scale(1, -1);
 				gtx.rotate(settings.imageRot.value);
-				gtx.drawImage(img,
-					(settings.imageX.value - imgw/2) * cwidth,
-					(settings.imageY.value - imgh/2) * cheight,
-					imgw * cwidth,
-					imgh * cheight);
+				
+				var imgBorderRad = settings.imageBorderRadius.value * cwidth;
+				if(imgBorderRad !== 0.0) {
+					gtx.save();
+						gtx.roundRect(
+							(settings.imageX.value - imgw/2) * cwidth,
+							(settings.imageY.value - imgh/2) * cheight,
+							imgw * cwidth,
+							imgh * cheight,
+							imgBorderRad);
+						gtx.clip();
+						
+						gtx.drawImage(img,
+							(settings.imageX.value - imgw/2) * cwidth,
+							(settings.imageY.value - imgh/2) * cheight,
+							imgw * cwidth,
+							imgh * cheight);
+					gtx.restore();
+				} else {
+					gtx.drawImage(img,
+						(settings.imageX.value - imgw/2) * cwidth,
+						(settings.imageY.value - imgh/2) * cheight,
+						imgw * cwidth,
+						imgh * cheight);
+				}
 			}
 		gtx.restore();
 	}
