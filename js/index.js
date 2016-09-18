@@ -1199,24 +1199,51 @@ window.onload = function() {
 		});
 		
 		var scInput = document.getElementById('soundcloudApp').parentNode.getElementsByClassName('appLinkInput')[0];
+		var container = scInput.parentNode.parentNode;
 		scInput.addEventListener('change', function() {
 			SC.resolve(this.value).then(function(s) {
 				var xhr = new XMLHttpRequest();
 				xhr.onload = function(e) {
 					processAudioDataURL(s.title, e.target.responseURL);
+					container.classList.remove('loading');
 				};
 				xhr.open('GET', s.stream_url + "?client_id="+scClientID);
+				container.classList.add('loading');
 				xhr.send();
 			});
 		});
 	}
 	
 	function initApps() {
+		var opts = {
+			lines: 8, // The number of lines to draw
+			length: 0, // The length of each line
+			width: 14, // The line thickness
+			radius: 19, // The radius of the inner circle
+			scale: 0.3, // Scales overall size of the spinner
+			corners: 1, // Corner roundness (0..1)
+			color: '#fff', // #rgb or #rrggbb or array of colors
+			opacity: 0, // Opacity of the lines
+			rotate: 90, // The rotation offset
+			direction: 1, // 1: clockwise, -1: counterclockwise
+			speed: 1.5, // Rounds per second
+			trail: 100, // Afterglow percentage
+			fps: 20, // Frames per second when using setTimeout() as a fallback for CSS
+			zIndex: 2e9, // The z-index (defaults to 2000000000)
+			className: 'spinner', // The CSS class to assign to the spinner
+			top: '50%', // Top position relative to parent
+			left: '50%', // Left position relative to parent
+			shadow: false, // Whether to render a shadow
+			hwaccel: true, // Whether to use hardware acceleration
+			position: 'absolute' // Element positioning
+		};
+		
 		var appsIcons = document.getElementsByClassName("musicAppIcon");
 		for(var i = 0; i < appsIcons.length; i++) {
 			var appDivContainer = document.createElement('div');
 			var urlformdiv = document.createElement('div');
 			var urlinput = document.createElement('input');
+			var loadicon = document.createElement('i');
 			var appIcon = appsIcons[i];
 			var parent = appIcon.parentNode;
 			
@@ -1226,11 +1253,15 @@ window.onload = function() {
 			parent.appendChild(appDivContainer);
 			
 			urlinput.placeholder = "Paste a link...";
-			
+
 			urlformdiv.appendChild(urlinput);
+			urlformdiv.appendChild(loadicon);
 			
 			urlformdiv.classList.add('appLinkForm');
 			urlinput.classList.add('appLinkInput');
+			
+			loadicon.classList.add('loadIcon');
+			new Spinner(opts).spin(loadicon);
 			
 			appDivContainer.appendChild(urlformdiv);
 			

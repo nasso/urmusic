@@ -754,7 +754,7 @@ select.ctrlInput {
 }
 
 .musicAppIconContainer {
-	margin-right: -250px;
+	margin-right: -300px;
 	
 	transition: margin-right 200ms;
 	-o-transition: margin-right 200ms;
@@ -763,16 +763,20 @@ select.ctrlInput {
 }
 
 .musicAppIconContainer.activated {
+	margin-right: -50px;
+}
+
+.musicAppIconContainer.activated.loading {
 	margin-right: 0px;
 }
 
 .musicAppIconContainer .appLinkForm {
 	display: inline-block;
-	width: 250px;
+	width: 300px;
 	height: 48px;
 	background-color: rgba(0, 0, 0, 0.5);
 	
-	text-align: center;
+	text-align: left;
 }
 
 .musicAppIconContainer .appLinkInput {
@@ -783,11 +787,28 @@ select.ctrlInput {
 	
 	border-radius: 4px;
 	padding: 4px 8px;
+	margin: 0px 4px;
 	
-	width: 220px;
+	width: 242px;
 	height: 32px;
 	
 	margin-top: 7px;
+}
+
+.musicAppIconContainer .loadIcon {
+	display: inline-block;
+	float: right;
+	
+	width: 50px;
+	height: 50px;
+	
+	font-size: 22px;
+	
+	line-height: 48px;
+	vertical-align: middle;
+	text-align: center;
+	
+	position: relative;
 }
 
 .musicAppIcon:hover, .musicAppIconContainer.activated .musicAppIcon {
