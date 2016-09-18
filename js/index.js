@@ -1201,6 +1201,8 @@ window.onload = function() {
 		var scInput = document.getElementById('soundcloudApp').parentNode.getElementsByClassName('appLinkInput')[0];
 		var container = scInput.parentNode.parentNode;
 		scInput.addEventListener('change', function() {
+			container.classList.add('loading');
+			
 			SC.resolve(this.value).then(function(s) {
 				var xhr = new XMLHttpRequest();
 				xhr.onload = function(e) {
@@ -1208,8 +1210,9 @@ window.onload = function() {
 					container.classList.remove('loading');
 				};
 				xhr.open('GET', s.stream_url + "?client_id="+scClientID);
-				container.classList.add('loading');
 				xhr.send();
+			}, function() {
+				container.classList.remove('loading');
 			});
 		});
 	}
