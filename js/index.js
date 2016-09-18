@@ -1204,7 +1204,7 @@ window.onload = function() {
 			SC.resolve(this.value).then(function(s) {
 				var xhr = new XMLHttpRequest();
 				xhr.onload = function(e) {
-					processAudioDataURL(s.title + "(SoundCloud)", e.target.responseURL);
+					processAudioDataURL(s.title + " (SoundCloud)", e.target.responseURL);
 					container.classList.remove('loading');
 				};
 				xhr.open('GET', s.stream_url + "?client_id="+scClientID);
