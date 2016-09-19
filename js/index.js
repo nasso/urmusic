@@ -826,7 +826,7 @@ window.onload = function() {
 		var fileName = soundFile.name.substr(0, soundFile.name.lastIndexOf('.'));
 		
 		reader.addEventListener('load', function(e) {
-			processAudioDataURL(filename, e.target.result);
+			processAudioDataURL(fileName, e.target.result);
 		});
 		
 		reader.readAsDataURL(soundFile);
