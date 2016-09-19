@@ -823,10 +823,8 @@ window.onload = function() {
 		}
 		
 		var reader = new FileReader();
-		var fileName = soundFile.name.substr(0, soundFile.name.lastIndexOf('.'));
-		
 		reader.addEventListener('load', function(e) {
-			processAudioDataURL(fileName, e.target.result);
+			processAudioDataURL(soundFile.name.substr(0, soundFile.name.lastIndexOf('.')), e.target.result);
 		});
 		
 		reader.readAsDataURL(soundFile);
