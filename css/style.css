@@ -353,6 +353,7 @@ canvas {
 	
 	margin: 0px;
 	padding: 0px;
+	margin-left: -1px;
 	
 	width: 40px;
 	height: 40px;
@@ -362,9 +363,8 @@ canvas {
 	
 	line-height: 40px;
 	
-	border-right: 1px solid rgba(255, 255, 255, 0.1);
-	border-top: 1px solid rgba(255, 255, 255, 0.1);
-	border-bottom: 0px solid #3498db;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-bottom: 1px solid #3498db;
 	
 	background: rgba(0, 0, 0, 0.2);
 	color: rgba(255, 255, 255, 0.4);
@@ -638,13 +638,13 @@ select.ctrlInput {
 	margin: 0px;
 	padding: 0px;
 	
-	margin-top: 8px;
-	
 	position: relative;
 	
+	text-align: center;
 	vertical-align: middle;
 	line-height: 40px;
 	
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	border-left: 4px solid #3498db;
 	padding-left: 10px;
 	

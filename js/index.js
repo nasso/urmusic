@@ -47,6 +47,13 @@ if (!Object.prototype.unwatch) {
 }
 
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+	r = Math.max(r, 0);
+	if(r === 0) {
+		this.beginPath();
+		this.rect(x, y, w, h);
+		return;
+	}
+	
 	if (w < 2 * r) r = w / 2;
 	if (h < 2 * r) r = h / 2;
 	this.beginPath();
@@ -60,7 +67,6 @@ CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 
 function isNullOrUndef(v) { return (v === null || v === undefined); }
 function EnumerationValue(ownerEnum, name) {
-
 	this.name = name;
 	this.ownerEnum = ownerEnum;
 }
@@ -82,7 +88,30 @@ function Enumeration(vals) {
 // The actual app
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
-var drawMode = new Enumeration(['LINES', 'FILL', 'OUTLINE']);
+var drawMode = new Enumeration([
+	'LINES',
+	'FILL',
+	'OUTLINE'
+]);
+
+var sectionType = new Enumeration([
+	'FREQ',
+	'TIME_DOM',
+	'IMAGE'
+]);
+
+var lineCapMode = new Enumeration([
+	'BUTT',
+	'ROUND',
+	'SQUARE'
+]);
+
+var lineJoinMode = new Enumeration([
+	'MITER',
+	'ROUND',
+	'BEVEL'
+]);
+
 var refreshables = {
 	SETTINGS_BIT: 1,
 	TABS_BIT: 2,
@@ -90,6 +119,10 @@ var refreshables = {
 };
 
 var exprArgs = [
+	'alert',
+	'window',
+	'navigator',
+	
 	'rand',
 	'max',
 	'min',
@@ -109,10 +142,34 @@ var exprArgs = [
 	'maxlowval',
 	'minlowval',
 	'maxhighval',
-	'minhighval'
+	'minhighval',
+	
+	'csize',
+	
+	// Section type specific
+	'imgw',
+	'imgh',
+	'imgr'
 ];
 
-function numberProperty(v) {
+var frameProps = {
+	maxval: 0,
+	minval: Number.MIN_SAFE_INTEGER,
+	
+	maxlowval: 0,
+	minlowval: Number.MIN_SAFE_INTEGER,
+	
+	maxhighval: 0,
+	minhighval: Number.MIN_SAFE_INTEGER,
+	
+	csize: 0,
+	
+	imgw: 0,
+	imgh: 0,
+	imgr: 0
+};
+
+function NumberProperty(v) {
 	if(!v) v = 0;
 	
 	if(typeof v === 'object' && v.hasOwnProperty('expr')) {
@@ -121,16 +178,16 @@ function numberProperty(v) {
 	
 	var expr = v.toString();
 	var gtr = new Function(exprArgs.join(','), 'return (' + expr + ')');
+	var constantNumber = +expr;
 	
-	var p = {};
-	p.toJSON = function() {
-		return expr;
-	};
-	
-	Object.defineProperty(p, 'value', {
+	Object.defineProperty(this, 'value', {
 		get: function() {
+			if(!Number.isNaN(constantNumber)) return constantNumber;
+			
 			try {
 				return gtr(
+					null, null, null,
+					
 					Math.random,
 					Math.max,
 					Math.min,
@@ -150,14 +207,20 @@ function numberProperty(v) {
 					frameProps.maxlowval,
 					frameProps.minlowval,
 					frameProps.maxhighval,
-					frameProps.minhighval);
+					frameProps.minhighval,
+					
+					frameProps.csize,
+					
+					frameProps.imgw,
+					frameProps.imgh,
+					frameProps.imgr);
 			} catch(e) {
 				return 0;
 			}
 		}
 	});
 	
-	Object.defineProperty(p, 'expr', {
+	Object.defineProperty(this, 'expr', {
 		get: function() {
 			return expr;
 		},
@@ -166,12 +229,17 @@ function numberProperty(v) {
 			if(val === '') val = '0';
 			
 			expr = val;
-			gtr = new Function(exprArgs.join(','), 'return (' + expr.toLowerCase() + ')');
+			constantNumber = +val;
+			
+			if(Number.isNaN(constantNumber)) {
+				gtr = new Function(exprArgs.join(','), 'return (' + expr.toLowerCase() + ')');
+			}
 		}
 	});
-	
-	return p;
 }
+NumberProperty.prototype.toJSON = function() {
+	return this.expr;
+};
 
 function AdvancedSettings(p) {
 	this.set(p);
@@ -182,96 +250,167 @@ AdvancedSettings.prototype.set = function(p) {
 	this.enableLowpass = !isNullOrUndef(p.enableLowpass) ? p.enableLowpass : false;
 	this.enableHighpass = !isNullOrUndef(p.enableHighpass) ? p.enableHighpass : false;
 	
-	this.lowpassFreq = !isNullOrUndef(p.lowpassFreq) ? p.lowpassFreq : 120;
-	this.highpassFreq = !isNullOrUndef(p.highpassFreq) ? p.highpassFreq : 480;
+	this.lowpassFreq = !isNullOrUndef(p.lowpassFreq) ? +p.lowpassFreq : 120;
+	this.highpassFreq = !isNullOrUndef(p.highpassFreq) ? +p.highpassFreq : 480;
 };
+
+function AnalyserSection(p) {
+	p = p || {};
+	
+	this.dataCount = new NumberProperty(!isNullOrUndef(p.dataCount) ? p.dataCount : 128);
+	this.lineWidth = new NumberProperty(!isNullOrUndef(p.lineWidth) ? p.lineWidth : 1.0);
+	this.lineCap = !isNullOrUndef(p.lineCap) ? lineCapMode[p.lineCap] : lineCapMode.BUTT;
+	this.startX = new NumberProperty(!isNullOrUndef(p.startX) ? p.startX : -1);
+	this.endX = new NumberProperty(!isNullOrUndef(p.endX) ? p.endX : 1);
+	this.yPos = new NumberProperty(!isNullOrUndef(p.yPos) ? p.yPos : 0);
+	this.exponent = new NumberProperty(!isNullOrUndef(p.exponent) ? p.exponent : 1);
+	this.height = new NumberProperty(!isNullOrUndef(p.height) ? p.height : 0.5);
+	this.mode = !isNullOrUndef(p.mode) ? drawMode[p.mode] : drawMode.LINES;
+	this.polar = new NumberProperty(!isNullOrUndef(p.polar) ? p.polar : 0.0);
+	this.clampShapeToZero = !isNullOrUndef(p.clampShapeToZero) ? p.clampShapeToZero : true;
+	this.closeShape = !isNullOrUndef(p.closeShape) ? p.closeShape : true;
+	this.drawLast = !isNullOrUndef(p.drawLast) ? p.drawLast : true;
+	this.quadratic = !isNullOrUndef(p.quadratic) ? p.quadratic : true;
+}
+
+function FreqSection(p) {
+	AnalyserSection.call(this, p);
+	
+	p = p || {};
+	
+	this.minDecibels = new NumberProperty(!isNullOrUndef(p.minDecibels) ? p.minDecibels : -100);
+	this.maxDecibels = new NumberProperty(!isNullOrUndef(p.maxDecibels) ? p.maxDecibels : -20);
+	this.minHeight = new NumberProperty(!isNullOrUndef(p.minHeight) ? p.minHeight : 0.01);
+	this.freqStart = new NumberProperty(!isNullOrUndef(p.freqStart) ? p.freqStart : 0);
+	this.freqEnd = new NumberProperty(!isNullOrUndef(p.freqEnd) ? p.freqEnd : 0.03);
+	this.smartFill = !isNullOrUndef(p.smartFill) ? p.smartFill : false;
+}
+
+function TimeDomSection(p) {
+	AnalyserSection.call(this, p);
+	
+	p = p || {};
+
+	this.lineJoin = !isNullOrUndef(p.lineJoin) ? lineJoinMode[p.lineJoin] : lineJoinMode.ROUND;
+}
+
+function ImageSection(p) {
+	p = p || {};
+	
+	this.imageURL = !isNullOrUndef(p.imageURL) ? p.imageURL : '';
+	this.imageBorderRadius = new NumberProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
+	
+	var that = this;
+	this.image = new Image();
+	
+	var imageReady = false;
+	this.image.onload = function() {
+		imageReady = true;
+	};
+	
+	Object.defineProperty(this, 'imageReady', {
+		get: function() {
+			return imageReady;
+		}
+	});
+	
+	this.watch('imageURL', function(id, oldVal, newVal) {
+		imageReady = false;
+		that.image.src = newVal;
+		
+		return newVal;
+	});
+	
+	this.image.src = this.imageURL;
+}
 
 function Section(p) {
 	p = p || {};
 	
 	this.name = !isNullOrUndef(p.name) ? p.name : 'A section';
+	this.type = !isNullOrUndef(p.type) ? sectionType[p.type] : sectionType.FREQ;
 	this.visible = !isNullOrUndef(p.visible) ? p.visible : true;
-	this.minDecibels = numberProperty(!isNullOrUndef(p.minDecibels) ? p.minDecibels : -100);
-	this.maxDecibels = numberProperty(!isNullOrUndef(p.maxDecibels) ? p.maxDecibels : -20);
-	this.barCount = numberProperty(!isNullOrUndef(p.barCount) ? p.barCount : 32);
-	this.freqStart = numberProperty(!isNullOrUndef(p.freqStart) ? p.freqStart : 0);
-	this.freqEnd = numberProperty(!isNullOrUndef(p.freqEnd) ? p.freqEnd : 0.03);
-	this.barsWidth = numberProperty(!isNullOrUndef(p.barsWidth) ? p.barsWidth : 6.0);
-	this.barsStartX = numberProperty(!isNullOrUndef(p.barsStartX) ? p.barsStartX : -1);
-	this.barsEndX = numberProperty(!isNullOrUndef(p.barsEndX) ? p.barsEndX : 1);
-	this.barsY = numberProperty(!isNullOrUndef(p.barsY) ? p.barsY : -0.5);
+	this.opacity = new NumberProperty(!isNullOrUndef(p.opacity) ? p.opacity : 1.0);
+	this.posX = new NumberProperty(!isNullOrUndef(p.posX) ? p.posX : 0.0);
+	this.posY = new NumberProperty(!isNullOrUndef(p.posY) ? p.posY : 0.0);
+	this.rotation = new NumberProperty(!isNullOrUndef(p.rotation) ? p.rotation : 0.0);
+	this.scaleX = new NumberProperty(!isNullOrUndef(p.scaleX) ? p.scaleX : 1.0);
+	this.scaleY = new NumberProperty(!isNullOrUndef(p.scaleY) ? p.scaleY : 1.0);
 	this.color = !isNullOrUndef(p.color) ? p.color : '#ffffff';
-	this.barsPow = numberProperty(!isNullOrUndef(p.barsPow) ? p.barsPow : 2);
-	this.barsHeight = numberProperty(!isNullOrUndef(p.barsHeight) ? p.barsHeight : 0.7);
-	this.barsMinHeight = numberProperty(!isNullOrUndef(p.barsMinHeight) ? p.barsMinHeight : 0.01);
-	this.glowness = numberProperty(!isNullOrUndef(p.glowness) ? p.glowness : 0.0);
-	this.polar = numberProperty(!isNullOrUndef(p.polar) ? p.polar : 0.0);
-	this.mode = !isNullOrUndef(p.mode) ? drawMode[p.mode] : drawMode.LINES;
-	this.clampShapeToZero = !isNullOrUndef(p.clampShapeToZero) ? p.clampShapeToZero : true;
-	this.closeShape = !isNullOrUndef(p.closeShape) ? p.closeShape : true;
-	this.smartFill = !isNullOrUndef(p.smartFill) ? p.smartFill : false;
-	this.drawLast = !isNullOrUndef(p.drawLast) ? p.drawLast : true;
-	this.quadratic = !isNullOrUndef(p.quadratic) ? p.quadratic : true;
+	this.glowness = new NumberProperty(!isNullOrUndef(p.glowness) ? p.glowness : 0.0);
+	this.target = null;
+	
+	if(this.type === sectionType.FREQ) {
+		this.target = new FreqSection(p.target ? p.target : p);
+	} else if(this.type === sectionType.TIME_DOM) {
+		this.target = new TimeDomSection(p.target ? p.target : p);
+	} else if(this.type === sectionType.IMAGE) {
+		this.target = new ImageSection(p.target ? p.target : p);
+	}
+	
+	var that = this;
+	this.watch('type', function(pname, oldVal, newVal) {
+		if(!(oldVal instanceof EnumerationValue && oldVal.ownerEnum === sectionType) || newVal === oldVal) {
+			return oldVal;
+		}
+		
+		this.type = newVal;
+		if(this.type === sectionType.FREQ) {
+			that.target = new FreqSection(that.target);
+		} else if(this.type === sectionType.TIME_DOM) {
+			that.target = new TimeDomSection(that.target);
+		} else if(this.type === sectionType.IMAGE) {
+			that.target = new ImageSection(that.target);
+		}
+		
+		refreshControls(refreshables.TABS_BIT);
+		
+		return newVal;
+	});
 }
 
 function Settings(p) {
 	this.set(p);
 }
-Settings.prototype.addSection = function(p) {
-	this.sections.push(new Section(p));
-	
-	return this;
-};
-Settings.prototype.set = function(p) {
-	p = p || {};
-	
-	this.smoothingTimeConstant = numberProperty(!isNullOrUndef(p.smoothingTimeConstant) ? p.smoothingTimeConstant : 0.65);
-	
-	this.sections = [];
-	if(Array.isArray(p.sections)) {
-		for(var i = 0; i < p.sections.length; i++) {
-			this.addSection(p.sections[i]);
+Settings.prototype = {
+	addSection: function(p) {
+		this.sections.push(new Section(p));
+		
+		return this;
+	},
+	set: function(p) {
+		p = p || {};
+		
+		this.smoothingTimeConstant = new NumberProperty(!isNullOrUndef(p.smoothingTimeConstant) ? p.smoothingTimeConstant : 0.65);
+		
+		this.sections = [];
+		if(Array.isArray(p.sections)) {
+			for(var i = 0; i < p.sections.length; i++) {
+				this.addSection(p.sections[i]);
+			}
 		}
+		
+		this.globalScale = new NumberProperty(!isNullOrUndef(p.globalScale) ? p.globalScale : 1.0);
+		this.globalOffsetX = new NumberProperty(!isNullOrUndef(p.globalOffsetX) ? p.globalOffsetX : 0.0);
+		this.globalOffsetY = new NumberProperty(!isNullOrUndef(p.globalOffsetY) ? p.globalOffsetY : 0.0);
+		this.globalRotation = new NumberProperty(!isNullOrUndef(p.globalRotation) ? p.globalRotation : 0.0);
+		
+		this.backgroundColor = !isNullOrUndef(p.backgroundColor) ? p.backgroundColor : '#3b3b3b';
+		
+		if(!this.advanced) this.advanced = new AdvancedSettings(p.advanced);
+		else this.advanced.set(p.advanced);
 	}
-	
-	this.globalScale = numberProperty(!isNullOrUndef(p.globalScale) ? p.globalScale : 1.0);
-	this.globalOffsetX = numberProperty(!isNullOrUndef(p.globalOffsetX) ? p.globalOffsetX : 0.0);
-	this.globalOffsetY = numberProperty(!isNullOrUndef(p.globalOffsetY) ? p.globalOffsetY : 0.0);
-	this.globalRotation = numberProperty(!isNullOrUndef(p.globalRotation) ? p.globalRotation : 0.0);
-	
-	this.imageURL = !isNullOrUndef(p.imageURL) ? p.imageURL : '';
-	this.imageX = numberProperty(!isNullOrUndef(p.imageX) ? p.imageX : 0);
-	this.imageY = numberProperty(!isNullOrUndef(p.imageY) ? p.imageY : 0);
-	this.imageWidth = numberProperty(!isNullOrUndef(p.imageWidth) ? p.imageWidth : 0.4);
-	this.imageHeight = numberProperty(!isNullOrUndef(p.imageHeight) ? p.imageHeight : 0.4);
-	this.imageBorderRadius = numberProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
-	this.imageRot = numberProperty(!isNullOrUndef(p.imageRot) ? p.imageRot : 0);
-	
-	this.backgroundColor = !isNullOrUndef(p.backgroundColor) ? p.backgroundColor : '#3b3b3b';
-	
-	if(!this.advanced) this.advanced = new AdvancedSettings(p.advanced);
-	else this.advanced.set(p.advanced);
 };
 
 var settingsPresets = {
 	'Default': new Settings().addSection(),
-	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"-0.55","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"Bass bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"-0.002","freqEnd":"0.02","barsWidth":"1","barsStartX":"0.65","barsEndX":"0.1","barsY":"0.2","color":"#ffffff","barsPow":"5","barsHeight":"0.05","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":false,"quadratic":true},{"name":"High top","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"1.45","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true},{"name":"High bottom","visible":true,"minDecibels":"-70","maxDecibels":"-30","barCount":"128","freqStart":"0.02","freqEnd":"0.035","barsWidth":"1","barsStartX":"0.65","barsEndX":"1.05","barsY":"0.2","color":"#ffffff","barsPow":"3","barsHeight":"0.03","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"dsg.png","imageX":"0","imageY":"0","imageWidth":"0.405","imageHeight":"0.405","imageBorderRadius":"0.405","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
-	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.23","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ff0000","barsPow":"3","barsHeight":"0.19","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"-0.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true},{"name":"A section","visible":true,"minDecibels":"-48","maxDecibels":"-20","barCount":"128","freqStart":"0","freqEnd":"0.015","barsWidth":"0.8","barsStartX":"1.5","barsEndX":"0.5","barsY":"0.4","color":"#ffffff","barsPow":"3","barsHeight":"0.15","barsMinHeight":"0.005","glowness":"0","polar":"1","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","imageURL":"dtb.png","imageX":"0","imageY":"0","imageWidth":"0.8","imageHeight":"0.8","imageBorderRadius":"0.8","imageRot":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
-	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","barCount":"256","freqStart":"0","freqEnd":"0.1","barsWidth":"0.5","barsStartX":"-1","barsEndX":"1","barsY":"0.2","color":"#ff0000","barsPow":"3","barsHeight":"-1","barsMinHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
+	'Time domain default': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","type":"TIME_DOM","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"256","lineWidth":"1","lineCap":"BUTT","polar":"0","lineJoin":"ROUND","startX":"-1","endX":"1","yPos":"0","exponent":"1","height":"0.5","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true}}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":false,"enableHighpass":false,"lowpassFreq":120,"highpassFreq":480}}')),
+	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"-0.55","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"Bass bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"0.65","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":false,"quadratic":true}},{"name":"High top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"1.45","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"High bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"0.65","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.41","scaleY":"0.41","color":"#ffffff","glowness":"0","target":{"imageURL":"dsg.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
+	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.8","scaleY":"0.8","color":"#ffffff","glowness":"0","target":{"imageURL":"dtb.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
+	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","dataCount":"256","freqStart":"0","freqEnd":"0.1","lineWidth":"0.5","startX":"-1","endX":"1","yPos":"0.2","color":"#ff0000","exponent":"3","height":"-1","minHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
 };
 
 var settings = new Settings();
-
-var frameProps = {
-	maxval: 0,
-	minval: Number.MIN_SAFE_INTEGER,
-	
-	maxlowval: 0,
-	minlowval: Number.MIN_SAFE_INTEGER,
-	
-	maxhighval: 0,
-	minhighval: Number.MIN_SAFE_INTEGER
-};
 
 function loadFilePreset(f, setIt) {
 	if(!f) return;
@@ -342,12 +481,13 @@ var refreshControls = (function(){
 				sectionSettingsUl.appendChild(sectionControls[thisIndex][i]);
 			}
 			
-			secTabs.children[thisIndex].classList.add("activated");
+			if(secTabs.children.length > 1) secTabs.children[Math.min(thisIndex, secTabs.children.length - 2)].classList.add("activated");
 		}
 	};
 	
 	var createControl = function(s, x) {
 		var p = s[x];
+		if(isNullOrUndef(p)) p = '';
 		
 		if((typeof p === 'object' && !p.hasOwnProperty('expr')) || typeof p === 'function') {
 			return null;
@@ -374,11 +514,10 @@ var refreshControls = (function(){
 		} else {
 			input.type = 'text';
 			
-			input.placeholder = p.hasOwnProperty('expr') ? 'expression' : (typeof p);
+			input.placeholder = p instanceof NumberProperty ? 'expression' : (typeof p);
 			
 			var val = p.toString();
-			
-			if(p.hasOwnProperty('expr')) {
+			if(p instanceof NumberProperty) {
 				input.value = p.expr;
 			} else {
 				if(val.startsWith('data:')) { // data url :p
@@ -553,28 +692,37 @@ var refreshControls = (function(){
 		return li;
 	};
 	
-	var createSectionControls = function(s) {
-		var ctrls = [];
+	var createSectionControls = (function() {
+		var ctrls = null;
 		
-		for(var x in s) {
-			var ctrl = null;
-			
-			if(s[x] instanceof EnumerationValue) {
-				ctrl = createControlCombo(s, x, s[x].ownerEnum);
-			} else if(x === 'name') {
-				// Special case for name
-				ctrl = createSectionNameControl(s, x);
-			} else {
-				ctrl = createControl(s, x);
+		function addControlsFor(s) {
+			for(var x in s) {
+				var ctrl = null;
+				
+				if(s[x] instanceof EnumerationValue) {
+					ctrl = createControlCombo(s, x, s[x].ownerEnum);
+				} else if(x === 'name') {
+					// Special case for name
+					ctrl = createSectionNameControl(s, x);
+				} else {
+					ctrl = createControl(s, x);
+				}
+				
+				if(ctrl) ctrls.push(ctrl);
 			}
-			
-			if(ctrl) ctrls.push(ctrl);
 		}
 		
-		return ctrls;
-	};
+		return function(s) {
+			ctrls = [];
+			
+			addControlsFor(s);
+			addControlsFor(s.target);
+			
+			return ctrls;
+		}
+	})();
 	
-	var actionTabClicked = function(e) {
+	var actionTabClicked = function() {
 		if(this === addTabLi) return;
 		
 		if(this.classList.contains('activated'))
@@ -688,8 +836,12 @@ var refreshControls = (function(){
 		if(!downloader)			downloader = document.getElementById('downloader');
 		if(!fileChooser)		fileChooser = document.getElementById('fileChooser');
 		
+		if((what & refreshables.SETTINGS_BIT) !== 0) refreshSettings();
+		if((what & refreshables.TABS_BIT) !== 0) refreshTabs();
+		if((what & refreshables.PRESETLIST_BIT) !== 0) refreshPresetList();
+		
 		if(!initialized) {
-			addTabLi.addEventListener('click', function(e) {
+			addTabLi.addEventListener('click', function() {
 				var newSec = new Section();
 				settings.sections.push(newSec);
 				
@@ -704,13 +856,13 @@ var refreshControls = (function(){
 				loadFilePreset(e.target.files[e.target.files.length - 1], true);
 			});
 			
-			loadPresetBtn.addEventListener('click', function(e) {
+			loadPresetBtn.addEventListener('click', function() {
 				// Ask for .urm file
 				fileChooser.accept = ".urm";
 				fileChooser.click();
 			});
 			
-			savePresetBtn.addEventListener('click', function(e) {
+			savePresetBtn.addEventListener('click', function() {
 				var newPresetName = presetNameIn.value ? presetNameIn.value : "untitled";
 				
 				// Download .urm
@@ -731,14 +883,10 @@ var refreshControls = (function(){
 				refreshPresetList();
 			});
 			
+			if(secTabs.children.length > 1) actionTabClicked.call(secTabs.children[0]);
+			
 			initialized = true;
 		}
-		
-		if((what & refreshables.SETTINGS_BIT) !== 0) refreshSettings();
-		if((what & refreshables.TABS_BIT) !== 0) refreshTabs();
-		if((what & refreshables.PRESETLIST_BIT) !== 0) refreshPresetList();
-		
-		if(secTabs.children[0]) actionTabClicked.call(secTabs.children[0]);
 	};
 })();
 
@@ -770,11 +918,34 @@ window.onload = function() {
 	var gtx = cvs.getContext('2d');
 	var ctx = new AudioContext();
 	var scClientID = '09bfcfe5b0303000a41b9e9675c0cb47';
+	var spinnerOpts = {
+		lines: 8, // The number of lines to draw
+		length: 0, // The length of each line
+		width: 14, // The line thickness
+		radius: 19, // The radius of the inner circle
+		scale: 0.3, // Scales overall size of the spinner
+		corners: 1, // Corner roundness (0..1)
+		color: '#fff', // #rgb or #rrggbb or array of colors
+		opacity: 0, // Opacity of the lines
+		rotate: 90, // The rotation offset
+		direction: 1, // 1: clockwise, -1: counterclockwise
+		speed: 1.5, // Rounds per second
+		trail: 100, // Afterglow percentage
+		fps: 20, // Frames per second when using setTimeout() as a fallback for CSS
+		zIndex: 2e9, // The z-index (defaults to 2000000000)
+		className: 'spinner', // The CSS class to assign to the spinner
+		top: '50%', // Top position relative to parent
+		left: '50%', // Left position relative to parent
+		shadow: false, // Whether to render a shadow
+		hwaccel: true, // Whether to use hardware acceleration
+		position: 'absolute' // Element positioning
+	};
 	
 	var audioSource;
 	var gainNode;
 	var analyser;
 	var freqData;
+	var timeData;
 	
 	var lowpass;
 	var lowAnalyser;
@@ -792,6 +963,7 @@ window.onload = function() {
 	
 	var firefoxIsBetter = document.getElementById('firefoxIsBetter');
 	var closeWarning = firefoxIsBetter.getElementsByClassName('close')[0];
+	var musicApps = document.getElementById('musicApps');
 	
 	function processImageFile(imageFile) {
 		if(!imageFile.type.match('image.*')) {
@@ -891,30 +1063,16 @@ window.onload = function() {
 		}
 	}
 	
-	function freeze(s) {
-		var o = {};
-		
-		for(var x in s) {
-			var v = s[x];
-			
-			if(typeof v === 'object' && v.hasOwnProperty('expr')) {
-				o[x] = v.value;
-			} else {
-				o[x] = v;
-			}
-		}
-		
-		return o;
-	}
-	
 	function freqValue(nind, section) {
+		var minDec = section.minDecibels.value;
+		
 		return Math.max(
 			getValue(
 				freqData,
-				lerp(section.freqStart, section.freqEnd, nind) * freqData.length,
+				lerp(section.freqStart.value, section.freqEnd.value, nind) * freqData.length,
 				section.quadratic,
-				section.minDecibels) - section.minDecibels,
-			0) / (section.maxDecibels - section.minDecibels);
+				minDec) - minDec,
+			0) / (section.maxDecibels.value - minDec);
 	}
 	
 	function quadCurve(p0y, cpy, p1y, t) {
@@ -934,6 +1092,16 @@ window.onload = function() {
 			if(audioElement.paused) {
 				for(var i = 0; i < freqData.length; i++) {
 					freqData[i] = Number.MIN_SAFE_INTEGER;
+				}
+			}
+		}
+		
+		if(!timeData) {
+			timeData = new Float32Array(analyser.frequencyBinCount);
+			
+			if(audioElement.paused) {
+				for(var i = 0; i < timeData.length; i++) {
+					timeData[i] = 0;
 				}
 			}
 		}
@@ -964,6 +1132,7 @@ window.onload = function() {
 		
 		if(!audioElement.paused) {
 			analyser.getFloatFrequencyData(freqData);
+			analyser.getFloatTimeDomainData(timeData);
 			
 			if(settings.advanced.enableLowpass) {
 				lowAnalyser.getFloatFrequencyData(lowFreqData);
@@ -983,6 +1152,9 @@ window.onload = function() {
 		frameProps.maxval = Math.max.apply(Math, freqData);
 		frameProps.time = audioElement.currentTime;
 		frameProps.duration = audioElement.duration;
+		frameProps.imgw = 0;
+		frameProps.imgh = 0;
+		frameProps.imgr = 0;
 		
 		if(settings.advanced.enableLowpass) {
 			frameProps.maxlowval = Math.max.apply(Math, lowFreqData);
@@ -999,9 +1171,9 @@ window.onload = function() {
 		requestAnimationFrame(loop);
 	}
 	
-	function getFootProps(cwidth, cheight, section, per) {
-		var x = lerp(section.barsStartX, section.barsEndX, per);
-		var y = section.barsY;
+	function getFootProps(csize, section, per) {
+		var x = lerp(section.startX, section.endX, per);
+		var y = section.yPos;
 		
 		if(section.polar > 0.0) {
 			var cosx = Math.cos((x * 0.5 + 0.5) * Math.PI * 2);
@@ -1010,11 +1182,11 @@ window.onload = function() {
 			var xp = cosx * y;
 			var yp = sinx * y;
 			
-			x = lerp(x * cwidth, xp * cwidth, section.polar);
-			y = lerp(y * cheight, yp * cheight, section.polar);
+			x = lerp(x * csize, xp * csize, section.polar);
+			y = lerp(y * csize, yp * csize, section.polar);
 		} else {
-			x *= cwidth;
-			y *= cheight;
+			x *= csize;
+			y *= csize;
 		}
 		
 		return {
@@ -1023,16 +1195,41 @@ window.onload = function() {
 		};
 	}
 	
-	function getProps(cwidth, cheight, section, per) {
-		var height = Math.pow(freqValue(per, section), section.barsPow) * section.barsHeight;
-		
-		var x = lerp(section.barsStartX, section.barsEndX, per);
-		var y = section.barsY;
-		
-		var ey = y + section.barsMinHeight + height;
-		var ex = x;
+	function getTimeFootProps(csize, section, per) {
+		var x = lerp(section.startX, section.endX, per);
+		var y = section.yPos;
 		
 		if(section.polar > 0.0) {
+			var cosx = Math.cos((x * 0.5 + 0.5) * Math.PI * 2);
+			var sinx = Math.sin((x * 0.5 + 0.5) * Math.PI * 2);
+			
+			var xp = cosx * y;
+			var yp = sinx * y;
+			
+			x = lerp(x * csize, xp * csize, section.polar);
+			y = lerp(y * csize, yp * csize, section.polar);
+		} else {
+			x *= csize;
+			y *= csize;
+		}
+		
+		return {
+			x: x,
+			y: y
+		};
+	}
+	
+	function getProps(csize, section, per) {
+		var height = Math.pow(freqValue(per, section), section.exponent.value) * section.height.value;
+		
+		var x = lerp(section.startX.value, section.endX.value, per);
+		var y = section.yPos.value;
+		
+		var ey = y + section.minHeight.value + height;
+		var ex = x;
+		
+		var polar = section.polar.value;
+		if(polar > 0.0) {
 			var cosx = Math.cos((x * 0.5 + 0.5) * Math.PI * 2);
 			var sinx = Math.sin((x * 0.5 + 0.5) * Math.PI * 2);
 			
@@ -1041,15 +1238,15 @@ window.onload = function() {
 			var exp = cosx * ey;
 			var eyp = sinx * ey;
 			
-			x = lerp(x * cwidth, xp * cwidth, section.polar);
-			y = lerp(y * cheight, yp * cheight, section.polar);
-			ex = lerp(ex * cwidth, exp * cwidth, section.polar);
-			ey = lerp(ey * cheight, eyp * cheight, section.polar);
+			x = lerp(x * csize, xp * csize, polar);
+			y = lerp(y * csize, yp * csize, polar);
+			ex = lerp(ex * csize, exp * csize, polar);
+			ey = lerp(ey * csize, eyp * csize, polar);
 		} else {
-			x *= cwidth;
-			y *= cheight;
-			ex *= cwidth;
-			ey *= cheight;
+			x *= csize;
+			y *= csize;
+			ex *= csize;
+			ey *= csize;
 		}
 		
 		return {
@@ -1060,130 +1257,268 @@ window.onload = function() {
 		};
 	}
 	
-	function render() {
-		var aspect = cvs.width / cvs.height;
-		var cwidth = cvs.width;
-		var cheight = cvs.height;
+	function getTimeProps(csize, section, per) {
+		var height = getValue(
+								timeData,
+								per * timeData.length,
+								section.quadratic,
+								0);
+		var powered = Math.abs(Math.pow(height, section.exponent.value));
+		height = (height >= 0 ? powered : -powered) * section.height.value;
 		
-		if(cwidth > cheight) {
-			cwidth /= aspect;
+		var x = lerp(section.startX.value, section.endX.value, per);
+		var y = section.yPos.value;
+		
+		var ey = y + height;
+		var ex = x;
+		 
+		var polar = section.polar.value;
+		if(polar > 0.0) {
+			var cosx = Math.cos((x * 0.5 + 0.5) * Math.PI * 2);
+			var sinx = Math.sin((x * 0.5 + 0.5) * Math.PI * 2);
+			
+			var xp = cosx * y;
+			var yp = sinx * y;
+			var exp = cosx * ey;
+			var eyp = sinx * ey;
+			
+			x = lerp(x * csize, xp * csize, polar);
+			y = lerp(y * csize, yp * csize, polar);
+			ex = lerp(ex * csize, exp * csize, polar);
+			ey = lerp(ey * csize, eyp * csize, polar);
 		} else {
-			cheight *= aspect;
+			x *= csize;
+			y *= csize;
+			ex *= csize;
+			ey *= csize;
 		}
 		
-		gtx.clearRect(0, 0, cvs.width, cvs.height);
-		
-		gtx.fillStyle = settings.backgroundColor;
-		gtx.fillRect(0, 0, cvs.width, cvs.height);
-		
-		gtx.save();
-			gtx.translate(cvs.width/2, cvs.height/2);
-			gtx.scale(0.5, -0.5);
-			
-			var glblscl = settings.globalScale.value;
-			gtx.scale(glblscl, glblscl);
-			
-			gtx.translate(settings.globalOffsetX.value * cwidth, settings.globalOffsetY.value * cheight);
-			gtx.rotate(settings.globalRotation.value);
-			
-			for(var is = 0; is < settings.sections.length; is++) {
-				var section = freeze(settings.sections[is]);
-				var mode = section.mode;
-				
-				var barCount = section.barCount;
-				
-				if(!section.visible) {
-					continue;
-				}
-				
-				gtx.strokeStyle = section.color;
-				gtx.fillStyle = section.color;
-				gtx.lineWidth = (section.barsWidth / 100) * Math.min(cvs.width, cvs.height);
-				gtx.shadowColor = section.color;
-				gtx.shadowBlur = section.glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
-				
-				gtx.beginPath();
-				for(var i = 0; i < barCount; i++) {
-					if(!section.drawLast && i === barCount - 1) {
-						break;
-					}
-					
-					var per = i / (barCount - 1);
-					
-					var p = getProps(cwidth, cheight, section, per);
-					
-					if(mode == drawMode.LINES || (i == 0 && section.clampShapeToZero)) {
-						gtx.moveTo(p.x, p.y);
-					}
-					
-					gtx.lineTo(p.ex, p.ey);
-					
-					if(i == barCount - 1 && section.clampShapeToZero) {
-						gtx.lineTo(p.x, p.y);
-					}
-				}
-				
-				if(section.closeShape && mode === drawMode.OUTLINE) { // Only affects outline mode
-					gtx.closePath();
-				}
-				
-				if(mode === drawMode.FILL) {
-					if(section.smartFill) {
-						for(var i = barCount - 1; i >= 0; i--) {
-							if(!section.drawLast && i === barCount - 1) {
-								continue;
-							}
-							
-							var per = i / (barCount - 1);
-							var fp = getFootProps(cwidth, cheight, section, per);
-							
-							gtx.lineTo(fp.x, fp.y);
-						}
-					}
-					
-					gtx.fill();
-				} else {
-					gtx.stroke();
-				}
-			}
-			
-			if(imgReady) {
-				gtx.shadowColor = 'rgba(0, 0, 0, 0)';
-				gtx.shadowBlur = 0;
-				
-				var imgw = settings.imageWidth.value;
-				var imgh = settings.imageHeight.value;
-				
-				gtx.scale(1, -1);
-				gtx.rotate(settings.imageRot.value);
-				
-				var imgBorderRad = settings.imageBorderRadius.value * cwidth;
-				if(imgBorderRad !== 0.0) {
-					gtx.save();
-						gtx.roundRect(
-							(settings.imageX.value - imgw/2) * cwidth,
-							(settings.imageY.value - imgh/2) * cheight,
-							imgw * cwidth,
-							imgh * cheight,
-							imgBorderRad);
-						gtx.clip();
-						
-						gtx.drawImage(img,
-							(settings.imageX.value - imgw/2) * cwidth,
-							(settings.imageY.value - imgh/2) * cheight,
-							imgw * cwidth,
-							imgh * cheight);
-					gtx.restore();
-				} else {
-					gtx.drawImage(img,
-						(settings.imageX.value - imgw/2) * cwidth,
-						(settings.imageY.value - imgh/2) * cheight,
-						imgw * cwidth,
-						imgh * cheight);
-				}
-			}
-		gtx.restore();
+		return {
+			x: x,
+			y: y,
+			ex: ex,
+			ey: ey
+		};
 	}
+	
+	var render = (function() {
+		var csize = 0;
+		var glblscl = 0;
+		
+		var section = null;
+		var sectarg = null;
+		var dataCount = 32;
+		var glowness = 0;
+		var lineWidth = 0;
+		
+		function renderFreq() {
+			dataCount = sectarg.dataCount.value;
+			var mode = sectarg.mode;
+			
+			gtx.strokeStyle = section.color;
+			gtx.fillStyle = section.color;
+			gtx.lineWidth = (sectarg.lineWidth.value / 100) * Math.min(cvs.width, cvs.height);
+			gtx.shadowColor = section.color;
+			gtx.shadowBlur = glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
+			
+			gtx.lineCap = sectarg.lineCap.name.toLowerCase();
+			
+			gtx.beginPath();
+			for(var i = 0; i < dataCount; i++) {
+				if(!sectarg.drawLast && i === dataCount - 1) {
+					break;
+				}
+				
+				var per = i / (dataCount - 1);
+				
+				var p = getProps(csize, sectarg, per);
+				
+				if(mode == drawMode.LINES || (i == 0 && sectarg.clampShapeToZero)) {
+					gtx.moveTo(p.x, p.y);
+				}
+				
+				gtx.lineTo(p.ex, p.ey);
+				
+				if(i == dataCount - 1 && sectarg.clampShapeToZero) {
+					gtx.lineTo(p.x, p.y);
+				}
+			}
+			
+			if(sectarg.closeShape && mode !== drawMode.FILL) { // Doesn't affect fill mode
+				gtx.closePath();
+			}
+			
+			if(mode === drawMode.FILL) {
+				if(sectarg.smartFill) {
+					for(var i = dataCount - 1; i >= 0; i--) {
+						if(!sectarg.drawLast && i === dataCount - 1) {
+							continue;
+						}
+						
+						var per = i / (dataCount - 1);
+						var fp = getFootProps(csize, sectarg, per);
+						
+						gtx.lineTo(fp.x, fp.y);
+					}
+				}
+				
+				gtx.fill();
+			} else {
+				gtx.moveTo(0, 0);
+				gtx.stroke();
+			}
+		};
+		
+		function renderTimeDom() {
+			dataCount = sectarg.dataCount.value;
+			var mode = sectarg.mode;
+			
+			gtx.strokeStyle = section.color;
+			gtx.fillStyle = section.color;
+			gtx.lineWidth = (sectarg.lineWidth.value / 100) * Math.min(cvs.width, cvs.height);
+			gtx.shadowColor = section.color;
+			gtx.shadowBlur = glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
+			
+			gtx.lineCap = sectarg.lineCap.name.toLowerCase();
+			gtx.lineJoin = sectarg.lineJoin.name.toLowerCase();
+			
+			gtx.beginPath();
+			for(var i = 0; i < dataCount; i++) {
+				if(!sectarg.drawLast && i === dataCount - 1) {
+					break;
+				}
+				
+				var per = i / (dataCount - 1);
+				
+				var p = getTimeProps(csize, sectarg, per);
+				
+				if(mode == drawMode.LINES || (i == 0 && sectarg.clampShapeToZero)) {
+					gtx.moveTo(p.x, p.y);
+				}
+				
+				gtx.lineTo(p.ex, p.ey);
+				
+				if(i == dataCount - 1 && sectarg.clampShapeToZero) {
+					gtx.lineTo(p.x, p.y);
+				}
+			}
+			
+			if(sectarg.closeShape && mode !== drawMode.FILL) { // Doesn't affect fill mode
+				gtx.closePath();
+			}
+			
+			if(mode === drawMode.FILL) {
+				if(sectarg.smartFill) {
+					for(var i = dataCount - 1; i >= 0; i--) {
+						if(!sectarg.drawLast && i === dataCount - 1) {
+							continue;
+						}
+						
+						var per = i / (dataCount - 1);
+						var fp = getTimeFootProps(csize, sectarg, per);
+						
+						gtx.lineTo(fp.x, fp.y);
+					}
+				}
+				
+				gtx.fill();
+			} else {
+				gtx.moveTo(0, 0);
+				gtx.stroke();
+			}
+		}
+		
+		function renderImage() {
+			if(!sectarg.imageReady) {
+				return;
+			}
+			
+			gtx.shadowColor = section.color;
+			gtx.shadowBlur = glowness * glblscl;
+			gtx.scale(1, -1);
+			
+			var img = sectarg.image;
+			
+			var imgBorderRad = sectarg.imageBorderRadius.value * csize;
+			if(imgBorderRad !== 0.0) {
+				gtx.roundRect(
+					-csize/2,
+					-csize/2,
+					csize,
+					csize,
+					imgBorderRad);
+				gtx.clip();
+				
+				gtx.drawImage(img,
+					-csize/2,
+					-csize/2,
+					csize,
+					csize);
+			} else {
+				gtx.drawImage(img,
+					-csize/2,
+					-csize/2,
+					csize,
+					csize);
+			}
+		}
+		
+		return function() {
+			aspect = cvs.width / cvs.height;
+			csize = Math.min(cvs.width, cvs.height);
+			
+			gtx.clearRect(0, 0, cvs.width, cvs.height);
+			
+			gtx.fillStyle = settings.backgroundColor;
+			gtx.fillRect(0, 0, cvs.width, cvs.height);
+			
+			gtx.save();
+				gtx.translate(cvs.width/2, cvs.height/2);
+				gtx.scale(0.5, -0.5);
+				
+				glblscl = settings.globalScale.value;
+				gtx.scale(glblscl, glblscl);
+				
+				gtx.translate(settings.globalOffsetX.value * csize, settings.globalOffsetY.value * csize);
+				gtx.rotate(settings.globalRotation.value * Math.PI / 180);
+				
+				for(var is = 0; is < settings.sections.length; is++) {
+					section = settings.sections[is];
+					sectarg = section.target;
+					
+					if(!section.visible) {
+						continue;
+					}
+					
+					if(section.type === sectionType.IMAGE && sectarg.imageReady) {
+						frameProps.imgw = sectarg.image.width;
+						frameProps.imgh = sectarg.image.height;
+						frameProps.imgr = frameProps.imgw / frameProps.imgh;
+					} else {
+						frameProps.imgw = frameProps.imgh = frameProps.imgr = 0;
+					}
+					
+					glowness = section.glowness.value;
+					
+					gtx.save();
+						gtx.translate(section.posX.value * csize, section.posY.value * csize);
+						gtx.rotate(section.rotation.value * Math.PI / 180);
+						gtx.scale(section.scaleX.value, section.scaleY.value);
+						
+						gtx.globalAlpha = section.opacity.value;
+						
+						if(section.type === sectionType.FREQ) {
+							renderFreq();
+						} else if(section.type === sectionType.TIME_DOM) {
+							renderTimeDom();
+						} else if(section.type === sectionType.IMAGE) {
+							renderImage();
+						}
+					gtx.restore();
+				}
+			gtx.restore();
+		}
+	})();
 	
 	function warnIfNotFirefox() {
 		if(navigator.userAgent.indexOf('Firefox/') === -1) {
@@ -1191,7 +1526,7 @@ window.onload = function() {
 		}
 	}
 	
-	function initSoundCloud() {		
+	function initSoundCloud() {
 		SC.initialize({
 			client_id: scClientID
 		});
@@ -1215,60 +1550,43 @@ window.onload = function() {
 		});
 	}
 	
-	function initApps() {
-		var opts = {
-			lines: 8, // The number of lines to draw
-			length: 0, // The length of each line
-			width: 14, // The line thickness
-			radius: 19, // The radius of the inner circle
-			scale: 0.3, // Scales overall size of the spinner
-			corners: 1, // Corner roundness (0..1)
-			color: '#fff', // #rgb or #rrggbb or array of colors
-			opacity: 0, // Opacity of the lines
-			rotate: 90, // The rotation offset
-			direction: 1, // 1: clockwise, -1: counterclockwise
-			speed: 1.5, // Rounds per second
-			trail: 100, // Afterglow percentage
-			fps: 20, // Frames per second when using setTimeout() as a fallback for CSS
-			zIndex: 2e9, // The z-index (defaults to 2000000000)
-			className: 'spinner', // The CSS class to assign to the spinner
-			top: '50%', // Top position relative to parent
-			left: '50%', // Left position relative to parent
-			shadow: false, // Whether to render a shadow
-			hwaccel: true, // Whether to use hardware acceleration
-			position: 'absolute' // Element positioning
-		};
+	function initApp(appIcon) {
+		var appDivContainer = document.createElement('div');
+		var urlformdiv = document.createElement('div');
+		var urlinput = document.createElement('input');
+		var loadicon = document.createElement('i');
 		
-		var appsIcons = document.getElementsByClassName("musicAppIcon");
-		for(var i = 0; i < appsIcons.length; i++) {
-			var appDivContainer = document.createElement('div');
-			var urlformdiv = document.createElement('div');
-			var urlinput = document.createElement('input');
-			var loadicon = document.createElement('i');
-			var appIcon = appsIcons[i];
-			var parent = appIcon.parentNode;
-			
-			parent.removeChild(appIcon);
-			appDivContainer.classList.add('musicAppIconContainer');
-			appDivContainer.appendChild(appIcon);
-			parent.appendChild(appDivContainer);
-			
-			urlinput.placeholder = "Paste a link...";
+		appDivContainer.classList.add('musicAppIconContainer');
+		appDivContainer.appendChild(appIcon);
+		
+		urlinput.placeholder = "Paste a link...";
 
-			urlformdiv.appendChild(urlinput);
-			urlformdiv.appendChild(loadicon);
-			
-			urlformdiv.classList.add('appLinkForm');
-			urlinput.classList.add('appLinkInput');
-			
-			loadicon.classList.add('loadIcon');
-			new Spinner(opts).spin(loadicon);
-			
-			appDivContainer.appendChild(urlformdiv);
-			
-			appIcon.addEventListener('click', function() {
-				appDivContainer.classList.contains('activated') ? appDivContainer.classList.remove('activated') : appDivContainer.classList.add('activated');
-			});
+		urlformdiv.appendChild(urlinput);
+		urlformdiv.appendChild(loadicon);
+		
+		urlformdiv.classList.add('appLinkForm');
+		urlinput.classList.add('appLinkInput');
+		
+		loadicon.classList.add('loadIcon');
+		new Spinner(spinnerOpts).spin(loadicon);
+		
+		appDivContainer.appendChild(urlformdiv);
+		
+		appIcon.addEventListener('click', function() {
+			appDivContainer.classList.contains('activated') ? appDivContainer.classList.remove('activated') : appDivContainer.classList.add('activated');
+		});
+		
+		return appDivContainer;
+	}
+	
+	function initApps() {
+		var apps = [];
+		while(musicApps.children.length !== 0) {
+			apps.push(initApp(musicApps.removeChild(musicApps.children[0])));
+		}
+		
+		for(var i = 0, l = apps.length; i < l; i++) {
+			musicApps.appendChild(apps[i]);
 		}
 		
 		initSoundCloud();
@@ -1393,7 +1711,7 @@ window.onload = function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.1.1\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.2\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
