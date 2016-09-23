@@ -6,8 +6,10 @@
 		<meta charset="utf-8">
 		<link rel="stylesheet" href="css/font-awesome.min.css">
 		<link rel="stylesheet" href="css/style.min.css" />
+		<!-- <link rel="stylesheet" href="css/theplayer.min.css" /> -->
 		
 		<script type="text/javascript" src="https://connect.soundcloud.com/sdk/sdk-3.1.2.js"></script>
+		<script type="text/javascript" src="js/theplayer.min.js"></script>
 		<script type="text/javascript" src="js/spin.min.js"></script>
 		<script type="text/javascript" src="js/index.min.js"></script>
 		
@@ -17,10 +19,12 @@
 		<div style="display: none;">
 			<a id="downloader"></a>
 			<input type="file" id="fileChooser" multiple />
+			
+			<audio id="audioElement" loop></audio>
 		</div>
 		
 		<canvas id="cvs"></canvas>
-		<audio id="audioElement" controls loop></audio>
+		<div class="aPlayer" id="itsThePlayer" data-target="audioElement"></div>
 		
 		<div id="musicApps">
 			<i class="fa fa-soundcloud w3-xlarge musicAppIcon" id="soundcloudApp"></i>

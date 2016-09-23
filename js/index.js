@@ -405,8 +405,8 @@ Settings.prototype = {
 var settingsPresets = {
 	'Default': new Settings().addSection(),
 	'Time domain default': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","type":"TIME_DOM","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"256","lineWidth":"1","lineCap":"BUTT","polar":"0","lineJoin":"ROUND","startX":"-1","endX":"1","yPos":"0","exponent":"1","height":"0.5","mode":"OUTLINE","clampShapeToZero":false,"closeShape":false,"drawLast":true,"quadratic":true}}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":false,"enableHighpass":false,"lowpassFreq":120,"highpassFreq":480}}')),
-	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"-0.55","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"Bass bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"0.65","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":false,"quadratic":true}},{"name":"High top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"1.45","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"High bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","polar":"1","minDecibels":"-70","maxDecibels":"-30","startX":"0.65","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","mode":"LINES","clampShapeToZero":true,"closeShape":true,"smartFill":false,"drawLast":true,"quadratic":true}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.41","scaleY":"0.41","color":"#ffffff","glowness":"0","target":{"imageURL":"dsg.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
-	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.8","scaleY":"0.8","color":"#ffffff","glowness":"0","target":{"imageURL":"dtb.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.01 - 0.005","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
+	'DubstepGutter': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"Bass top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","startX":"-0.55","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","mode":"LINES","polar":"1","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true,"minDecibels":"-70","maxDecibels":"-30","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","smartFill":false}},{"name":"Bass bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","startX":"0.65","endX":"0.1","yPos":"0.2","exponent":"5","height":"0.05","mode":"LINES","polar":"1","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true,"minDecibels":"-70","maxDecibels":"-30","minHeight":"0","freqStart":"-0.002","freqEnd":"0.02","smartFill":false}},{"name":"High top","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","startX":"1.45","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","mode":"FILL","polar":"1","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true,"minDecibels":"-70","maxDecibels":"-30","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","smartFill":false}},{"name":"High bottom","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"1","lineCap":"ROUND","startX":"0.65","endX":"1.05","yPos":"0.2","exponent":"3","height":"0.03","mode":"FILL","polar":"1","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true,"minDecibels":"-70","maxDecibels":"-30","minHeight":"0","freqStart":"0.02","freqEnd":"0.035","smartFill":false}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.41","scaleY":"0.41","color":"#ffffff","glowness":"0","target":{"imageURL":"dsg.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 3.8, 1.5)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.015 - 0.0075","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.015 - 0.0075","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":20,"highpassFreq":480}}')),
+	'Drop the Bassline': new Settings(JSON.parse('{"smoothingTimeConstant":"0.5","sections":[{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.23","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ff0000","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.19","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"-0.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"FREQ","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"1","scaleY":"1","color":"#ffffff","glowness":"0","target":{"dataCount":"128","lineWidth":"0.8","lineCap":"BUTT","polar":"1","minDecibels":"-48","maxDecibels":"-20","startX":"1.5","endX":"0.5","yPos":"0.4","exponent":"3","height":"0.15","minHeight":"0.002","freqStart":"0","freqEnd":"0.015","mode":"FILL","clampShapeToZero":false,"closeShape":false,"smartFill":true,"drawLast":true,"quadratic":true}},{"name":"A section","type":"IMAGE","visible":true,"opacity":"1","posX":"0","posY":"0","rotation":"0","scaleX":"0.8","scaleY":"0.8","color":"#ffffff","glowness":"0","target":{"imageURL":"dtb.png","imageBorderRadius":"0.5","image":{}}}],"globalScale":"max(max((maxlowval + 70) / 50, 0) * 1.2, 0.8)","globalOffsetX":"rand() * max((maxlowval + 70) / 50, 0) * 0.015 - 0.0075","globalOffsetY":"rand() * max((maxlowval + 70) / 50, 0) * 0.015 - 0.0075","globalRotation":"0","backgroundColor":"#3b3b3b","advanced":{"enableLowpass":true,"enableHighpass":false,"lowpassFreq":"100","highpassFreq":480}}')),
 	'BOD': new Settings(JSON.parse('{"smoothingTimeConstant":"0.65","sections":[{"name":"A section","visible":true,"minDecibels":"-65","maxDecibels":"-10","dataCount":"256","freqStart":"0","freqEnd":"0.1","lineWidth":"0.5","startX":"-1","endX":"1","yPos":"0.2","color":"#ff0000","exponent":"3","height":"-1","minHeight":"-0.002","glowness":"64","polar":"0","mode":"LINES","clampShapeToZero":true,"closeShape":true,"drawLast":true,"quadratic":true}],"globalScale":"1","globalOffsetX":"0","globalOffsetY":"0","globalRotation":"0","imageURL":"","imageX":"0","imageY":"0","imageWidth":"0.4","imageHeight":"0.4","imageRot":"0","backgroundColor":"#000000"}'))
 };
 
@@ -906,7 +906,7 @@ function loadPreset(name) {
 	refreshControls();
 }
 
-window.onload = function() {
+window.addEventListener('load', function() {
 	var requestAnimationFrame =
 		window.requestAnimationFrame ||
 		window.mozRequestAnimationFrame ||
@@ -1602,6 +1602,7 @@ window.onload = function() {
 		
 		audioSource = ctx.createMediaElementSource(audioElement);
 		gainNode = ctx.createGain();
+		gainNode.gain.value = 0.8;
 		
 		analyser = ctx.createAnalyser();
 		analyser.fftSize = 2048;
@@ -1634,15 +1635,19 @@ window.onload = function() {
 		}, false);
 		
 		if(!localStorage.urmusic_volume) {
-			localStorage.urmusic_volume = audioElement.volume;
+			localStorage.urmusic_volume = gainNode.gain.value;
 		} else {
-			audioElement.volume = localStorage.urmusic_volume;
+			gainNode.gain.value = localStorage.urmusic_volume;
 		}
 		
-		audioElement.addEventListener('volumechange', function(e) {
-			gainNode.gain.value = (audioElement.volume === 0 ? 0.0 : (1.0 / audioElement.volume));
+		THEPLAYER.setupPlayer(document.getElementById('itsThePlayer'), {
+			target: audioElement,
+			volume: gainNode.gain.value,
 			
-			localStorage.urmusic_volume = audioElement.volume;
+			onvolumechange: function(newValue) {
+				gainNode.gain.value = newValue;
+				localStorage.urmusic_volume = newValue;
+			}
 		});
 		
 		audioElement.crossOrigin = "anonymous";
@@ -1673,16 +1678,14 @@ window.onload = function() {
 			firefoxIsBetter.style.marginRight = '';
 		});
 		
-		gainNode.gain.value = (audioElement.volume === 0 ? 0.0 : (1.0 / audioElement.volume));
-		
 		lowpass.connect(lowAnalyser);
 		highpass.connect(highAnalyser);
 		
 		audioSource.connect(gainNode);
-		gainNode.connect(analyser);
-		gainNode.connect(lowpass);
-		gainNode.connect(highpass);
-		audioSource.connect(ctx.destination);
+		audioSource.connect(analyser);
+		audioSource.connect(lowpass);
+		audioSource.connect(highpass);
+		gainNode.connect(ctx.destination);
 		
 		img.addEventListener('load', function() {
 			imgReady = true;
@@ -1711,7 +1714,7 @@ window.onload = function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.2\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.3\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
@@ -1722,4 +1725,4 @@ window.onload = function() {
 	}
 	
 	init();
-};
+});
