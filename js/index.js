@@ -412,29 +412,7 @@ var settingsPresets = {
 
 var settings = new Settings();
 
-function loadFilePreset(f, setIt) {
-	if(!f) return;
-	
-	var fileName = f.name.substr(0, f.name.lastIndexOf('.'));
-	var reader = new FileReader();
-	reader.onload = function(e) {
-		var newSets = new Settings(JSON.parse(e.target.result));
-		
-		var newPresetName = fileName;
-		
-		var counter = 0;
-		while(settingsPresets[newPresetName] !== undefined) {
-			newPresetName = fileName + ' (' + counter + ')';
-			counter++;
-		}
-		
-		settingsPresets[newPresetName] = newSets;
-		
-		if(setIt) loadPreset(newPresetName);
-	};
-	
-	reader.readAsText(f);
-}
+var activeSection = null;
 
 var refreshControls = (function(){
 	var glblSettings = null;
@@ -481,7 +459,14 @@ var refreshControls = (function(){
 				sectionSettingsUl.appendChild(sectionControls[thisIndex][i]);
 			}
 			
-			if(secTabs.children.length > 1) secTabs.children[Math.min(thisIndex, secTabs.children.length - 2)].classList.add("activated");
+			if(secTabs.children.length > 1) {
+				secTabs.children[Math.min(thisIndex, secTabs.children.length - 2)].classList.add("activated");
+				activeSection = settings.sections[Math.min(thisIndex, secTabs.children.length - 2)];
+			} else {
+				activeSection = null;
+			}
+		} else {
+			activeSection = null;
 		}
 	};
 	
@@ -526,7 +511,6 @@ var refreshControls = (function(){
 					input.value = p.toString();
 				}
 			}
-			
 		}
 		
 		input.addEventListener('change', function(){
@@ -749,6 +733,8 @@ var refreshControls = (function(){
 		for(var i = 0; i < sectionControls[thisIndex].length; i++) {
 			sectionSettingsUl.appendChild(sectionControls[thisIndex][i]);
 		}
+		
+		activeSection = settings.sections[thisIndex];
 	};
 	
 	var actionAddTab = function(i) {
@@ -906,6 +892,30 @@ function loadPreset(name) {
 	refreshControls();
 }
 
+function loadFilePreset(f, setIt) {
+	if(!f) return;
+	
+	var fileName = f.name.substr(0, f.name.lastIndexOf('.'));
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var newSets = new Settings(JSON.parse(e.target.result));
+		
+		var newPresetName = fileName;
+		
+		var counter = 0;
+		while(settingsPresets[newPresetName] !== undefined) {
+			newPresetName = fileName + ' (' + counter + ')';
+			counter++;
+		}
+		
+		settingsPresets[newPresetName] = newSets;
+		
+		if(setIt) loadPreset(newPresetName);
+	};
+	
+	reader.readAsText(f);
+}
+
 window.addEventListener('load', function() {
 	var requestAnimationFrame =
 		window.requestAnimationFrame ||
@@ -966,15 +976,15 @@ window.addEventListener('load', function() {
 	var musicApps = document.getElementById('musicApps');
 	
 	function processImageFile(imageFile) {
-		if(!imageFile.type.match('image.*')) {
+		if(!imageFile.type.match('image.*') || !activeSection || activeSection.type !== sectionType.IMAGE) {
 			return;
 		}
 		
 		var reader = new FileReader();
 		reader.addEventListener('load', function(e) {
-			settings.imageURL = e.target.result;
+			activeSection.target.imageURL = e.target.result;
 			
-			refreshControls(refreshables.SETTINGS_BIT);
+			refreshControls(refreshables.TABS_BIT);
 		});
 		
 		reader.readAsDataURL(imageFile);
@@ -1714,7 +1724,7 @@ window.addEventListener('load', function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.3\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.3.1\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
