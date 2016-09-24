@@ -716,9 +716,10 @@ select.ctrlInput {
 }
 
 .warningMessage p {
-	padding: 16px;
+	padding: 12px;
 	
 	text-align: justify;
+	font-size: 0.8em;
 	
 	background: rgba(0, 0, 0, 0.5);
 }
