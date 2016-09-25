@@ -85,6 +85,10 @@ function Enumeration(vals) {
 	}
 }
 
+function clamp(x, a, b) {
+	return Math.max(Math.min(x, b), a);
+}
+
 // The actual app
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -126,6 +130,7 @@ var exprArgs = [
 	'rand',
 	'max',
 	'min',
+	'clamp',
 	'cos',
 	'sin',
 	'tan',
@@ -191,6 +196,7 @@ function NumberProperty(v) {
 					Math.random,
 					Math.max,
 					Math.min,
+					clamp,
 					Math.cos,
 					Math.sin,
 					Math.tan,
