@@ -46,6 +46,17 @@ if (!Object.prototype.unwatch) {
 	});
 }
 
+function prettyTime(s) {
+	s = s || 0;
+	
+	var seconds = (s % 60) | 0;
+	var minutes = (s / 60 % 60) | 0;
+	var hours = (s / 3600) | 0;
+	
+	if(hours) return hours+':'+('0'+minutes).substr(-2)+':'+('0'+seconds).substr(-2);
+	else return minutes+':'+('0'+seconds).substr(-2);
+}
+
 CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
 	r = Math.max(r, 0);
 	if(r === 0) {
@@ -101,7 +112,8 @@ var drawMode = new Enumeration([
 var sectionType = new Enumeration([
 	'FREQ',
 	'TIME_DOM',
-	'IMAGE'
+	'IMAGE',
+	'TEXT'
 ]);
 
 var lineCapMode = new Enumeration([
@@ -114,6 +126,21 @@ var lineJoinMode = new Enumeration([
 	'MITER',
 	'ROUND',
 	'BEVEL'
+]);
+
+var textAlignMode = new Enumeration([
+	'LEFT',
+	'CENTER',
+	'RIGHT'
+]);
+
+var textBaselineMode = new Enumeration([
+	'TOP',
+	'HANGING',
+	'MIDDLE',
+	'ALPHABETIC',
+	'IDEOGRAPHIC',
+	'BOTTOM'
 ]);
 
 var refreshables = {
@@ -131,6 +158,8 @@ var exprArgs = [
 	'max',
 	'min',
 	'clamp',
+	'floor',
+	'ceil',
 	'cos',
 	'sin',
 	'tan',
@@ -154,7 +183,11 @@ var exprArgs = [
 	// Section type specific
 	'imgw',
 	'imgh',
-	'imgr'
+	'imgr',
+	
+	'songtitle',
+	'prettytime',
+	'prettyduration'
 ];
 
 var frameProps = {
@@ -171,13 +204,20 @@ var frameProps = {
 	
 	imgw: 0,
 	imgh: 0,
-	imgr: 0
+	imgr: 0,
+	
+	time: 0,
+	duration: 0,
+	prettytime: "0:00",
+	prettyduration: "0:00"
 };
 
-function NumberProperty(v) {
+var currentSongTitle = "Silence";
+
+function ExpressionProperty(v) {
 	if(!v) v = 0;
 	
-	if(typeof v === 'object' && v.hasOwnProperty('expr')) {
+	if(v instanceof ExpressionProperty) {
 		v = v.expr;
 	}
 	
@@ -197,6 +237,8 @@ function NumberProperty(v) {
 					Math.max,
 					Math.min,
 					clamp,
+					Math.floor,
+					Math.ceil,
 					Math.cos,
 					Math.sin,
 					Math.tan,
@@ -219,7 +261,11 @@ function NumberProperty(v) {
 					
 					frameProps.imgw,
 					frameProps.imgh,
-					frameProps.imgr);
+					frameProps.imgr,
+					
+					currentSongTitle,
+					frameProps.prettytime,
+					frameProps.prettyduration);
 			} catch(e) {
 				return 0;
 			}
@@ -238,12 +284,12 @@ function NumberProperty(v) {
 			constantNumber = +val;
 			
 			if(Number.isNaN(constantNumber)) {
-				gtr = new Function(exprArgs.join(','), 'return (' + expr.toLowerCase() + ')');
+				gtr = new Function(exprArgs.join(','), 'return (' + expr + ')');
 			}
 		}
 	});
 }
-NumberProperty.prototype.toJSON = function() {
+ExpressionProperty.prototype.toJSON = function() {
 	return this.expr;
 };
 
@@ -266,16 +312,16 @@ AdvancedSettings.prototype.set = function(p) {
 function AnalyserSection(p) {
 	p = p || {};
 	
-	this.dataCount = new NumberProperty(!isNullOrUndef(p.dataCount) ? p.dataCount : 128);
-	this.lineWidth = new NumberProperty(!isNullOrUndef(p.lineWidth) ? p.lineWidth : 1.0);
+	this.dataCount = new ExpressionProperty(!isNullOrUndef(p.dataCount) ? p.dataCount : 128);
+	this.lineWidth = new ExpressionProperty(!isNullOrUndef(p.lineWidth) ? p.lineWidth : 1.0);
 	this.lineCap = !isNullOrUndef(p.lineCap) ? lineCapMode[p.lineCap] : lineCapMode.BUTT;
-	this.startX = new NumberProperty(!isNullOrUndef(p.startX) ? p.startX : -1);
-	this.endX = new NumberProperty(!isNullOrUndef(p.endX) ? p.endX : 1);
-	this.yPos = new NumberProperty(!isNullOrUndef(p.yPos) ? p.yPos : 0);
-	this.exponent = new NumberProperty(!isNullOrUndef(p.exponent) ? p.exponent : 1);
-	this.height = new NumberProperty(!isNullOrUndef(p.height) ? p.height : 0.5);
+	this.startX = new ExpressionProperty(!isNullOrUndef(p.startX) ? p.startX : -1);
+	this.endX = new ExpressionProperty(!isNullOrUndef(p.endX) ? p.endX : 1);
+	this.yPos = new ExpressionProperty(!isNullOrUndef(p.yPos) ? p.yPos : 0);
+	this.exponent = new ExpressionProperty(!isNullOrUndef(p.exponent) ? p.exponent : 1);
+	this.height = new ExpressionProperty(!isNullOrUndef(p.height) ? p.height : 0.5);
 	this.mode = !isNullOrUndef(p.mode) ? drawMode[p.mode] : drawMode.LINES;
-	this.polar = new NumberProperty(!isNullOrUndef(p.polar) ? p.polar : 0.0);
+	this.polar = new ExpressionProperty(!isNullOrUndef(p.polar) ? p.polar : 0.0);
 	this.clampShapeToZero = !isNullOrUndef(p.clampShapeToZero) ? p.clampShapeToZero : true;
 	this.closeShape = !isNullOrUndef(p.closeShape) ? p.closeShape : true;
 	this.drawLast = !isNullOrUndef(p.drawLast) ? p.drawLast : true;
@@ -287,11 +333,11 @@ function FreqSection(p) {
 	
 	p = p || {};
 	
-	this.minDecibels = new NumberProperty(!isNullOrUndef(p.minDecibels) ? p.minDecibels : -100);
-	this.maxDecibels = new NumberProperty(!isNullOrUndef(p.maxDecibels) ? p.maxDecibels : -20);
-	this.minHeight = new NumberProperty(!isNullOrUndef(p.minHeight) ? p.minHeight : 0.01);
-	this.freqStart = new NumberProperty(!isNullOrUndef(p.freqStart) ? p.freqStart : 0);
-	this.freqEnd = new NumberProperty(!isNullOrUndef(p.freqEnd) ? p.freqEnd : 0.03);
+	this.minDecibels = new ExpressionProperty(!isNullOrUndef(p.minDecibels) ? p.minDecibels : -100);
+	this.maxDecibels = new ExpressionProperty(!isNullOrUndef(p.maxDecibels) ? p.maxDecibels : -20);
+	this.minHeight = new ExpressionProperty(!isNullOrUndef(p.minHeight) ? p.minHeight : 0.01);
+	this.freqStart = new ExpressionProperty(!isNullOrUndef(p.freqStart) ? p.freqStart : 0);
+	this.freqEnd = new ExpressionProperty(!isNullOrUndef(p.freqEnd) ? p.freqEnd : 0.03);
 	this.smartFill = !isNullOrUndef(p.smartFill) ? p.smartFill : false;
 }
 
@@ -307,7 +353,7 @@ function ImageSection(p) {
 	p = p || {};
 	
 	this.imageURL = !isNullOrUndef(p.imageURL) ? p.imageURL : '';
-	this.imageBorderRadius = new NumberProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
+	this.imageBorderRadius = new ExpressionProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
 	
 	var that = this;
 	this.image = new Image();
@@ -333,20 +379,31 @@ function ImageSection(p) {
 	this.image.src = this.imageURL;
 }
 
+function TextSection(p) {
+	p = p || {};
+	
+	this.text = new ExpressionProperty(!isNullOrUndef(p.text) ? p.text : '"Type your text here"');
+	this.fontStyle = !isNullOrUndef(p.fontStyle) ? p.fontStyle : "normal";
+	this.fontSize = new ExpressionProperty(!isNullOrUndef(p.fontSize) ? p.fontSize : 0.2);
+	this.fontFamily = !isNullOrUndef(p.fontFamily) ? p.fontFamily : "sans-serif";
+	this.textAlign = !isNullOrUndef(p.textAlign) ? textAlignMode[p.textAlign] : textAlignMode.CENTER;
+	this.textBaseline = !isNullOrUndef(p.textBaseline) ? textBaselineMode[p.textBaseline] : textBaselineMode.ALPHABETIC;
+}
+
 function Section(p) {
 	p = p || {};
 	
 	this.name = !isNullOrUndef(p.name) ? p.name : 'A section';
 	this.type = !isNullOrUndef(p.type) ? sectionType[p.type] : sectionType.FREQ;
 	this.visible = !isNullOrUndef(p.visible) ? p.visible : true;
-	this.opacity = new NumberProperty(!isNullOrUndef(p.opacity) ? p.opacity : 1.0);
-	this.posX = new NumberProperty(!isNullOrUndef(p.posX) ? p.posX : 0.0);
-	this.posY = new NumberProperty(!isNullOrUndef(p.posY) ? p.posY : 0.0);
-	this.rotation = new NumberProperty(!isNullOrUndef(p.rotation) ? p.rotation : 0.0);
-	this.scaleX = new NumberProperty(!isNullOrUndef(p.scaleX) ? p.scaleX : 1.0);
-	this.scaleY = new NumberProperty(!isNullOrUndef(p.scaleY) ? p.scaleY : 1.0);
+	this.opacity = new ExpressionProperty(!isNullOrUndef(p.opacity) ? p.opacity : 1.0);
+	this.posX = new ExpressionProperty(!isNullOrUndef(p.posX) ? p.posX : 0.0);
+	this.posY = new ExpressionProperty(!isNullOrUndef(p.posY) ? p.posY : 0.0);
+	this.rotation = new ExpressionProperty(!isNullOrUndef(p.rotation) ? p.rotation : 0.0);
+	this.scaleX = new ExpressionProperty(!isNullOrUndef(p.scaleX) ? p.scaleX : 1.0);
+	this.scaleY = new ExpressionProperty(!isNullOrUndef(p.scaleY) ? p.scaleY : 1.0);
 	this.color = !isNullOrUndef(p.color) ? p.color : '#ffffff';
-	this.glowness = new NumberProperty(!isNullOrUndef(p.glowness) ? p.glowness : 0.0);
+	this.glowness = new ExpressionProperty(!isNullOrUndef(p.glowness) ? p.glowness : 0.0);
 	this.target = null;
 	
 	if(this.type === sectionType.FREQ) {
@@ -355,6 +412,8 @@ function Section(p) {
 		this.target = new TimeDomSection(p.target ? p.target : p);
 	} else if(this.type === sectionType.IMAGE) {
 		this.target = new ImageSection(p.target ? p.target : p);
+	} else if(this.type === sectionType.TEXT) {
+		this.target = new TextSection(p.target ? p.target : p);
 	}
 	
 	var that = this;
@@ -363,13 +422,14 @@ function Section(p) {
 			return oldVal;
 		}
 		
-		this.type = newVal;
-		if(this.type === sectionType.FREQ) {
+		if(newVal === sectionType.FREQ) {
 			that.target = new FreqSection(that.target);
-		} else if(this.type === sectionType.TIME_DOM) {
+		} else if(newVal === sectionType.TIME_DOM) {
 			that.target = new TimeDomSection(that.target);
-		} else if(this.type === sectionType.IMAGE) {
+		} else if(newVal === sectionType.IMAGE) {
 			that.target = new ImageSection(that.target);
+		} else if(newVal === sectionType.TEXT) {
+			that.target = new TextSection(that.target);
 		}
 		
 		refreshControls(refreshables.TABS_BIT);
@@ -390,7 +450,7 @@ Settings.prototype = {
 	set: function(p) {
 		p = p || {};
 		
-		this.smoothingTimeConstant = new NumberProperty(!isNullOrUndef(p.smoothingTimeConstant) ? p.smoothingTimeConstant : 0.65);
+		this.smoothingTimeConstant = new ExpressionProperty(!isNullOrUndef(p.smoothingTimeConstant) ? p.smoothingTimeConstant : 0.65);
 		
 		this.sections = [];
 		if(Array.isArray(p.sections)) {
@@ -399,10 +459,10 @@ Settings.prototype = {
 			}
 		}
 		
-		this.globalScale = new NumberProperty(!isNullOrUndef(p.globalScale) ? p.globalScale : 1.0);
-		this.globalOffsetX = new NumberProperty(!isNullOrUndef(p.globalOffsetX) ? p.globalOffsetX : 0.0);
-		this.globalOffsetY = new NumberProperty(!isNullOrUndef(p.globalOffsetY) ? p.globalOffsetY : 0.0);
-		this.globalRotation = new NumberProperty(!isNullOrUndef(p.globalRotation) ? p.globalRotation : 0.0);
+		this.globalScale = new ExpressionProperty(!isNullOrUndef(p.globalScale) ? p.globalScale : 1.0);
+		this.globalOffsetX = new ExpressionProperty(!isNullOrUndef(p.globalOffsetX) ? p.globalOffsetX : 0.0);
+		this.globalOffsetY = new ExpressionProperty(!isNullOrUndef(p.globalOffsetY) ? p.globalOffsetY : 0.0);
+		this.globalRotation = new ExpressionProperty(!isNullOrUndef(p.globalRotation) ? p.globalRotation : 0.0);
 		
 		this.backgroundColor = !isNullOrUndef(p.backgroundColor) ? p.backgroundColor : '#3b3b3b';
 		
@@ -508,10 +568,10 @@ var refreshControls = (function(){
 		} else {
 			input.type = 'text';
 			
-			input.placeholder = p instanceof NumberProperty ? 'expression' : (typeof p);
+			input.placeholder = p instanceof ExpressionProperty ? 'expression' : (typeof p);
 			
 			var val = p.toString();
-			if(p instanceof NumberProperty) {
+			if(p instanceof ExpressionProperty) {
 				input.value = p.expr;
 			} else {
 				if(val.startsWith('data:')) { // data url :p
@@ -973,10 +1033,7 @@ window.addEventListener('load', function() {
 	var highpass;
 	var highAnalyser;
 	var highFreqData;
-	
-	var imgReady = false;
-	
-	var img = new Image();
+
 	var audioElement = document.getElementById("audioElement");
 	var helpNav = document.getElementById('helpNav');
 	
@@ -1001,6 +1058,7 @@ window.addEventListener('load', function() {
 	
 	function processAudioDataURL(title, theurl) {
 		audioElement.src = theurl;
+		currentSongTitle = title;
 		document.title = "Urmusic - " + title;
 		
 		audioElement.play();
@@ -1171,6 +1229,8 @@ window.addEventListener('load', function() {
 		frameProps.maxval = Math.max.apply(Math, freqData);
 		frameProps.time = audioElement.currentTime;
 		frameProps.duration = audioElement.duration;
+		frameProps.prettytime = prettyTime(frameProps.time);
+		frameProps.prettyduration = prettyTime(frameProps.duration);
 		frameProps.imgw = 0;
 		frameProps.imgh = 0;
 		frameProps.imgr = 0;
@@ -1336,7 +1396,7 @@ window.addEventListener('load', function() {
 			
 			gtx.strokeStyle = section.color;
 			gtx.fillStyle = section.color;
-			gtx.lineWidth = (sectarg.lineWidth.value / 100) * Math.min(cvs.width, cvs.height);
+			gtx.lineWidth = (sectarg.lineWidth.value / 100) * csize;
 			gtx.shadowColor = section.color;
 			gtx.shadowBlur = glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
 			
@@ -1394,7 +1454,7 @@ window.addEventListener('load', function() {
 			
 			gtx.strokeStyle = section.color;
 			gtx.fillStyle = section.color;
-			gtx.lineWidth = (sectarg.lineWidth.value / 100) * Math.min(cvs.width, cvs.height);
+			gtx.lineWidth = (sectarg.lineWidth.value / 100) * csize;
 			gtx.shadowColor = section.color;
 			gtx.shadowBlur = glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
 			
@@ -1482,9 +1542,29 @@ window.addEventListener('load', function() {
 			}
 		}
 		
+		function renderText() {
+			var txt = '';
+			
+			if(!sectarg.text || '' === (txt = sectarg.text.value)) {
+				return;
+			}
+		
+			gtx.shadowColor = section.color;
+			gtx.shadowBlur = glowness * glblscl;
+			gtx.fillStyle = section.color;
+			gtx.font = sectarg.fontStyle + ' ' + (sectarg.fontSize.value * csize) + 'px ' + sectarg.fontFamily;
+			gtx.textAlign = sectarg.textAlign.name.toLowerCase();
+			gtx.textBaseline = sectarg.textBaseline.name.toLowerCase();
+			
+			gtx.scale(1, -1);
+			
+			gtx.fillText(txt, 0, 0);
+		}
+		
 		return function() {
 			aspect = cvs.width / cvs.height;
 			csize = Math.min(cvs.width, cvs.height);
+			frameProps.csize = csize;
 			
 			gtx.clearRect(0, 0, cvs.width, cvs.height);
 			
@@ -1532,6 +1612,8 @@ window.addEventListener('load', function() {
 							renderTimeDom();
 						} else if(section.type === sectionType.IMAGE) {
 							renderImage();
+						} else if(section.type === sectionType.TEXT) {
+							renderText();
 						}
 					gtx.restore();
 				}
@@ -1706,15 +1788,6 @@ window.addEventListener('load', function() {
 		audioSource.connect(highpass);
 		gainNode.connect(ctx.destination);
 		
-		img.addEventListener('load', function() {
-			imgReady = true;
-		});
-		settings.watch('imageURL', function(id, oldval, newval) {
-			imgReady = false;
-			img.src = newval;
-			
-			return newval;
-		});
 		settings.advanced.watch('lowpassFreq', function(id, oldval, newval) {
 			lowpass.frequency.value = newval;
 			return newval;
