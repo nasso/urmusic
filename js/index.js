@@ -46,6 +46,29 @@ if (!Object.prototype.unwatch) {
 	});
 }
 
+function lerp(a, b, x) {
+	return a + x * (b - a);
+}
+
+var smoothrand = (function() {
+	var randset = [];
+	
+	var flr = 0;
+	var ceil = 0;
+	
+	return function(i) {
+		i = i < 0 ? -i : i;
+		
+		flr = i | 0;
+		ceil = (i+1) | 0;
+		
+		if(isNullOrUndef(randset[flr])) randset[flr] = Math.random();
+		if(isNullOrUndef(randset[ceil])) randset[ceil] = Math.random();
+		
+		return lerp(randset[flr], randset[ceil], Math.cos((i - flr) * -1 * Math.PI) * -0.5 + 0.5);
+	};
+})();
+
 function prettyTime(s) {
 	s = s || 0;
 	
@@ -155,6 +178,7 @@ var exprArgs = [
 	'navigator',
 	
 	'rand',
+	'smoothrand',
 	'max',
 	'min',
 	'clamp',
@@ -234,6 +258,7 @@ function ExpressionProperty(v) {
 					null, null, null,
 					
 					Math.random,
+					smoothrand,
 					Math.max,
 					Math.min,
 					clamp,
@@ -1101,10 +1126,6 @@ window.addEventListener('load', function() {
 		}
 	}
 	
-	function lerp(a, b, x) {
-		return a + x * (b - a);
-	}
-	
 	function addressArray(array, i, outValue) {
 		if(i < 0 || i >= array.length) {
 			return outValue;
@@ -1113,6 +1134,10 @@ window.addEventListener('load', function() {
 		}
 	}
 	
+	function quadCurve(p0y, cpy, p1y, t) {
+		return (1.0 - t) * (1.0 - t) * p0y + 2.0 * (1.0 - t) * t * cpy + t * t * p1y;
+	}
+
 	function getValue(array, index, quadInterpolation, minValue) {
 		// Quadratic interpolation
 		if(quadInterpolation) {
@@ -1150,12 +1175,6 @@ window.addEventListener('load', function() {
 				section.quadratic,
 				minDec) - minDec,
 			0) / (section.maxDecibels.value - minDec);
-	}
-	
-	function quadCurve(p0y, cpy, p1y, t) {
-		var y = (1.0 - t) * (1.0 - t) * p0y + 2.0 * (1.0 - t) * t * cpy + t * t * p1y;
-		
-		return y;
 	}
 	
 	function loop() {
@@ -1806,7 +1825,7 @@ window.addEventListener('load', function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.3.3\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
