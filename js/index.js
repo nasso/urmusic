@@ -125,6 +125,8 @@ function clamp(x, a, b) {
 
 // The actual app
 var AudioContext = window.AudioContext || window.webkitAudioContext;
+var MediaStream = window.MediaStream || window.webkitMediaStream;
+var MediaRecorder = window.MediaRecorder || window.webkitMediaRecorder;
 
 var drawMode = new Enumeration([
 	'LINES',
@@ -1062,10 +1064,19 @@ window.addEventListener('load', function() {
 
 	var audioElement = document.getElementById("audioElement");
 	var helpNav = document.getElementById('helpNav');
+	var thePlayer = document.getElementById('itsThePlayer');
 	
 	var firefoxIsBetter = document.getElementById('firefoxIsBetter');
 	var closeWarning = firefoxIsBetter.getElementsByClassName('close')[0];
 	var musicApps = document.getElementById('musicApps');
+	
+	var bottomMenuOpener = document.getElementById('bottomMenuOpener');
+	var bottomMenu = document.getElementById('bottomMenu');
+	var buttonRecord = document.getElementById('videoRecord');
+	
+	var cvs_strm_track = cvs.captureStream().getTracks()[0];
+	var aud_strm_track = ctx.createMediaStreamDestination().stream.getTracks()[0];
+	var recorder = new MediaRecorder(new MediaStream([cvs_strm_track, aud_strm_track]));
 	
 	function processImageFile(imageFile) {
 		if(!imageFile.type.match('image.*') || !activeSection || activeSection.type !== sectionType.IMAGE) {
@@ -1089,7 +1100,8 @@ window.addEventListener('load', function() {
 		
 		audioElement.play();
 		
-		if(!helpNav.classList.contains("masked")) helpNav.classList.add("masked");
+		helpNav.classList.add("masked");
+		// buttonRecord.classList.remove('disabled');
 	}
 	
 	function processAudioFile(soundFile) {
@@ -1761,7 +1773,7 @@ window.addEventListener('load', function() {
 			gainNode.gain.value = localStorage.urmusic_volume;
 		}
 		
-		THEPLAYER.setupPlayer(document.getElementById('itsThePlayer'), {
+		THEPLAYER.setupPlayer(thePlayer, {
 			target: audioElement,
 			volume: gainNode.gain.value,
 			
@@ -1786,6 +1798,16 @@ window.addEventListener('load', function() {
 			}
 		});
 		
+		recorder.addEventListener('dataavailable', function(e) {
+			downloader.href = URL.createObjectURL(e.data);
+			downloader.download = "urmusic recording.webm";
+			
+			downloader.click();
+			
+			buttonRecord.innerHTML = "Record a video";
+			buttonRecord.classList.remove('disabled');
+		});
+		
 		presetMenuOpenCloseBtn.addEventListener('click', function() {
 			if(this.classList.contains('opened')) {
 				this.classList.remove('opened');
@@ -1797,6 +1819,42 @@ window.addEventListener('load', function() {
 		});
 		closeWarning.addEventListener('click', function() {
 			firefoxIsBetter.style.marginRight = '';
+		});
+		bottomMenuOpener.addEventListener('click', function() {
+			this.classList.toggle('closeMode');
+			thePlayer.classList.toggle('bottomMenuOpened');
+			bottomMenu.classList.toggle('opened');
+		});
+		buttonRecord.addEventListener('mousedown', function() {
+			this.classList.add('pushed');
+		});
+		buttonRecord.addEventListener('mouseup', function() {
+			this.classList.remove('pushed');
+		});
+		buttonRecord.addEventListener('click', function() {
+			if(this.classList.contains('disabled')) return;
+			
+			if(recorder.state === 'recording') {
+				recorder.stop();
+				
+				return;
+			}
+			
+			// Start recording
+			audioElement.currentTime = 0;
+			// recorder.start();
+			
+			this.innerHTML = "Stop the record";
+		});
+		
+		audioElement.addEventListener('ended', function() {
+			if(recorder.state === 'recording') recorder.stop();
+		});
+		audioElement.addEventListener('pause', function() {
+			if(recorder.state === 'recording') recorder.pause();
+		});
+		audioElement.addEventListener('play', function() {
+			if(recorder.state === 'paused') recorder.resume();
 		});
 		
 		lowpass.connect(lowAnalyser);
@@ -1826,7 +1884,7 @@ window.addEventListener('load', function() {
 		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4\n"
+		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4.1\n"
 		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 		
 		loadPreset();
