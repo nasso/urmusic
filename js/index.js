@@ -1078,6 +1078,8 @@ window.addEventListener('load', function() {
 	var aud_strm_track = ctx.createMediaStreamDestination().stream.getTracks()[0];
 	var recorder = new MediaRecorder(new MediaStream([cvs_strm_track, aud_strm_track]));
 	
+	var hidableStuff = document.getElementsByClassName('hidable');
+	
 	function processImageFile(imageFile) {
 		if(!imageFile.type.match('image.*') || !activeSection || activeSection.type !== sectionType.IMAGE) {
 			return;
@@ -1725,174 +1727,193 @@ window.addEventListener('load', function() {
 		initSoundCloud();
 	}
 	
-	function init() {
-		if(!cvs || !gtx || !ctx) {
-			alert("Your browser isn't compatible"); 
-			throw new Error("Couldn't initialize");
+	window.addEventListener('keydown', function(e) {
+		if(e.keyCode === 112) { // F1
+			e.preventDefault();
+			
+			for(var i = 0; i < hidableStuff.length; i++) {
+				hidableStuff[i].classList.toggle('hidden');
+			}
+		} else if(audioElement.src) {
+			if(e.keyCode === 32) { // Spacebar
+				e.preventDefault();
+				
+				if(audioElement.paused) audioElement.play();
+				else audioElement.pause();
+			} else if(e.keyCode === 36) { // Home
+				audioElement.currentTime = 0;
+			} else if(e.keyCode === 37) { // Left
+				audioElement.currentTime -= 5;
+			} else if(e.keyCode === 39) { // Right
+				audioElement.currentTime += 5;
+			}
+		}
+	});
+	
+	if(!cvs || !gtx || !ctx) {
+		alert("Your browser isn't compatible"); 
+		throw new Error("Couldn't initialize");
+		
+		return;
+	}
+	
+	audioSource = ctx.createMediaElementSource(audioElement);
+	gainNode = ctx.createGain();
+	gainNode.gain.value = 0.8;
+	
+	analyser = ctx.createAnalyser();
+	analyser.fftSize = 2048;
+	
+	lowpass = ctx.createBiquadFilter();
+	lowpass.type = 'lowpass';
+	lowAnalyser = ctx.createAnalyser();
+	lowAnalyser.fftSize = 2048;
+	
+	highpass = ctx.createBiquadFilter();
+	highpass.type = 'highpass';
+	highAnalyser = ctx.createAnalyser();
+	highAnalyser.fftSize = 2048;
+	
+	cvs.width = document.body.clientWidth;
+	cvs.height = document.body.clientHeight;
+	
+	cvs.addEventListener('dragover', function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+		
+		e.dataTransfer.dropEffect = 'copy';
+	}, false);
+	
+	cvs.addEventListener('drop', function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+		
+		processFiles(e.dataTransfer.files);
+	}, false);
+	
+	if(!localStorage.urmusic_volume) {
+		localStorage.urmusic_volume = gainNode.gain.value;
+	} else {
+		gainNode.gain.value = localStorage.urmusic_volume;
+	}
+	
+	THEPLAYER.setupPlayer(thePlayer, {
+		target: audioElement,
+		volume: gainNode.gain.value,
+		
+		onvolumechange: function(newValue) {
+			gainNode.gain.value = newValue;
+			localStorage.urmusic_volume = newValue;
+		}
+	});
+	
+	audioElement.crossOrigin = "anonymous";
+	
+	var setNav = document.getElementById('settingsNav');
+	var presetMenuOpenCloseBtn = document.getElementById('presetMenuOpenCloseBtn');
+	var presetMenu = document.getElementById('settingsPresetsMenu');
+	
+	document.getElementById('hambParent').addEventListener('click', function(e) {
+		setNav.classList.contains('activated') ? setNav.classList.remove('activated') : setNav.classList.add('activated');
+		
+		if(!setNav.classList.contains('activated')) {
+			presetMenu.classList.remove('opened');
+			presetMenuOpenCloseBtn.classList.remove('opened');
+		}
+	});
+	
+	recorder.addEventListener('dataavailable', function(e) {
+		downloader.href = URL.createObjectURL(e.data);
+		downloader.download = "urmusic recording.webm";
+		
+		downloader.click();
+		
+		buttonRecord.innerHTML = "Record a video";
+		buttonRecord.classList.remove('disabled');
+	});
+	
+	presetMenuOpenCloseBtn.addEventListener('click', function() {
+		if(this.classList.contains('opened')) {
+			this.classList.remove('opened');
+			presetMenu.classList.remove('opened');
+		} else {
+			this.classList.add('opened');
+			presetMenu.classList.add('opened');
+		}
+	});
+	closeWarning.addEventListener('click', function() {
+		firefoxIsBetter.style.marginRight = '';
+	});
+	bottomMenuOpener.addEventListener('click', function() {
+		this.classList.toggle('closeMode');
+		thePlayer.classList.toggle('bottomMenuOpened');
+		bottomMenu.classList.toggle('opened');
+	});
+	buttonRecord.addEventListener('mousedown', function() {
+		this.classList.add('pushed');
+	});
+	buttonRecord.addEventListener('mouseup', function() {
+		this.classList.remove('pushed');
+	});
+	buttonRecord.addEventListener('click', function() {
+		if(this.classList.contains('disabled')) return;
+		
+		if(recorder.state === 'recording') {
+			recorder.stop();
 			
 			return;
 		}
 		
-		audioSource = ctx.createMediaElementSource(audioElement);
-		gainNode = ctx.createGain();
-		gainNode.gain.value = 0.8;
+		// Start recording
+		audioElement.currentTime = 0;
+		// recorder.start();
 		
-		analyser = ctx.createAnalyser();
-		analyser.fftSize = 2048;
-		
-		lowpass = ctx.createBiquadFilter();
-		lowpass.type = 'lowpass';
-		lowAnalyser = ctx.createAnalyser();
-		lowAnalyser.fftSize = 2048;
-		
-		highpass = ctx.createBiquadFilter();
-		highpass.type = 'highpass';
-		highAnalyser = ctx.createAnalyser();
-		highAnalyser.fftSize = 2048;
-		
-		cvs.width = document.body.clientWidth;
-		cvs.height = document.body.clientHeight;
-		
-		cvs.addEventListener('dragover', function(e) {
-			e.stopPropagation();
-			e.preventDefault();
-			
-			e.dataTransfer.dropEffect = 'copy';
-		}, false);
-		
-		cvs.addEventListener('drop', function(e) {
-			e.stopPropagation();
-			e.preventDefault();
-			
-			processFiles(e.dataTransfer.files);
-		}, false);
-		
-		if(!localStorage.urmusic_volume) {
-			localStorage.urmusic_volume = gainNode.gain.value;
-		} else {
-			gainNode.gain.value = localStorage.urmusic_volume;
-		}
-		
-		THEPLAYER.setupPlayer(thePlayer, {
-			target: audioElement,
-			volume: gainNode.gain.value,
-			
-			onvolumechange: function(newValue) {
-				gainNode.gain.value = newValue;
-				localStorage.urmusic_volume = newValue;
-			}
-		});
-		
-		audioElement.crossOrigin = "anonymous";
-		
-		var setNav = document.getElementById('settingsNav');
-		var presetMenuOpenCloseBtn = document.getElementById('presetMenuOpenCloseBtn');
-		var presetMenu = document.getElementById('settingsPresetsMenu');
-		
-		document.getElementById('hambParent').addEventListener('click', function(e) {
-			setNav.classList.contains('activated') ? setNav.classList.remove('activated') : setNav.classList.add('activated');
-			
-			if(!setNav.classList.contains('activated')) {
-				presetMenu.classList.remove('opened');
-				presetMenuOpenCloseBtn.classList.remove('opened');
-			}
-		});
-		
-		recorder.addEventListener('dataavailable', function(e) {
-			downloader.href = URL.createObjectURL(e.data);
-			downloader.download = "urmusic recording.webm";
-			
-			downloader.click();
-			
-			buttonRecord.innerHTML = "Record a video";
-			buttonRecord.classList.remove('disabled');
-		});
-		
-		presetMenuOpenCloseBtn.addEventListener('click', function() {
-			if(this.classList.contains('opened')) {
-				this.classList.remove('opened');
-				presetMenu.classList.remove('opened');
-			} else {
-				this.classList.add('opened');
-				presetMenu.classList.add('opened');
-			}
-		});
-		closeWarning.addEventListener('click', function() {
-			firefoxIsBetter.style.marginRight = '';
-		});
-		bottomMenuOpener.addEventListener('click', function() {
-			this.classList.toggle('closeMode');
-			thePlayer.classList.toggle('bottomMenuOpened');
-			bottomMenu.classList.toggle('opened');
-		});
-		buttonRecord.addEventListener('mousedown', function() {
-			this.classList.add('pushed');
-		});
-		buttonRecord.addEventListener('mouseup', function() {
-			this.classList.remove('pushed');
-		});
-		buttonRecord.addEventListener('click', function() {
-			if(this.classList.contains('disabled')) return;
-			
-			if(recorder.state === 'recording') {
-				recorder.stop();
-				
-				return;
-			}
-			
-			// Start recording
-			audioElement.currentTime = 0;
-			// recorder.start();
-			
-			this.innerHTML = "Stop the record";
-		});
-		
-		audioElement.addEventListener('ended', function() {
-			if(recorder.state === 'recording') recorder.stop();
-		});
-		audioElement.addEventListener('pause', function() {
-			if(recorder.state === 'recording') recorder.pause();
-		});
-		audioElement.addEventListener('play', function() {
-			if(recorder.state === 'paused') recorder.resume();
-		});
-		
-		lowpass.connect(lowAnalyser);
-		highpass.connect(highAnalyser);
-		
-		audioSource.connect(gainNode);
-		audioSource.connect(analyser);
-		audioSource.connect(lowpass);
-		audioSource.connect(highpass);
-		gainNode.connect(ctx.destination);
-		
-		settings.advanced.watch('lowpassFreq', function(id, oldval, newval) {
-			lowpass.frequency.value = newval;
-			return newval;
-		});
-		settings.advanced.watch('highpassFreq', function(id, oldval, newval) {
-			highpass.frequency.value = newval;
-			return newval;
-		});
-		settings.advanced.lowpassFreq = settings.advanced.lowpassFreq;
-		settings.advanced.highpassFreq = settings.advanced.highpassFreq;
-		
-		initApps();
-		
-		console.log(
-			" _    _ ________     __  _ \n"
-		+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
-		+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
-		+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-		+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4.1\n"
-		+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
-		
-		loadPreset();
-		
-		loop();
-		
-		warnIfNotFirefox();
-	}
+		this.innerHTML = "Stop the record";
+	});
 	
-	init();
+	audioElement.addEventListener('ended', function() {
+		if(recorder.state === 'recording') recorder.stop();
+	});
+	audioElement.addEventListener('pause', function() {
+		if(recorder.state === 'recording') recorder.pause();
+	});
+	audioElement.addEventListener('play', function() {
+		if(recorder.state === 'paused') recorder.resume();
+	});
+	
+	lowpass.connect(lowAnalyser);
+	highpass.connect(highAnalyser);
+	
+	audioSource.connect(gainNode);
+	audioSource.connect(analyser);
+	audioSource.connect(lowpass);
+	audioSource.connect(highpass);
+	gainNode.connect(ctx.destination);
+	
+	settings.advanced.watch('lowpassFreq', function(id, oldval, newval) {
+		lowpass.frequency.value = newval;
+		return newval;
+	});
+	settings.advanced.watch('highpassFreq', function(id, oldval, newval) {
+		highpass.frequency.value = newval;
+		return newval;
+	});
+	settings.advanced.lowpassFreq = settings.advanced.lowpassFreq;
+	settings.advanced.highpassFreq = settings.advanced.highpassFreq;
+	
+	initApps();
+	
+	console.log(
+		" _    _ ________     __  _ \n"
+	+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
+	+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
+	+	"|  __  |  __|   \\   /   | |\t" +	"\n"
+	+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4.1\n"
+	+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
+	
+	loadPreset();
+	
+	loop();
+	
+	warnIfNotFirefox();
 });

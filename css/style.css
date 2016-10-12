@@ -899,7 +899,7 @@ select.ctrlInput {
 	
 	display: inline-block;
 	
-	margin: 8px 2px;
+	margin: 16px 2px;
 	padding: 8px 16px;
 	
 	border-bottom: 4px solid #c0392b;
@@ -923,4 +923,30 @@ select.ctrlInput {
 .button.disabled {
 	background-color: #aaa;
 	border-color: #777;
+}
+
+.hidable {
+	transition: opacity 500ms;
+	-o-transition: opacity 500ms;
+	-moz-transition: opacity 500ms;
+	-webkit-transition: opacity 500ms;
+}
+
+.hidable.hidden {
+	pointer-events: none;
+	
+	opacity: 0.0;
+}
+
+.keyboardkey {
+	display: inline-block;
+	
+	padding: 2px 8px;
+	background: #eee;
+	border-bottom: 2px solid #aaa;
+	
+	border-radius: 4px;
+	margin: 0px 4px;
+	
+	color: black;
 }
