@@ -1917,5 +1917,17 @@ window.addEventListener('load', function() {
 	
 	loop();
 	
-	warnIfNotFirefox();
+	var relec = null;
+	if(require && (relec = require('electron'))) {
+		var args = relec.remote.process.argv;
+		if(args[1]) {
+			var title = args[1];
+			title = title.replace(/\\/g, '/');
+			title = title.substr(title.lastIndexOf('/') + 1, title.lastIndexOf('.'));
+			
+			processAudioDataURL(title, args[1]);
+		}
+	} else {
+		warnIfNotFirefox();
+	}
 });
