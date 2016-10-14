@@ -1728,6 +1728,8 @@ window.addEventListener('load', function() {
 	}
 	
 	window.addEventListener('keydown', function(e) {
+		if(document.activeElement && document.activeElement.tagName === "INPUT") { return; }
+		
 		if(e.keyCode === 112) { // F1
 			e.preventDefault();
 			
