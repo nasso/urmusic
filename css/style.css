@@ -899,12 +899,14 @@ select.ctrlInput {
 	
 	display: inline-block;
 	
+	text-decoration: none;
+	
 	margin: 16px 2px;
 	padding: 8px 16px;
 	
-	border-bottom: 4px solid #c0392b;
+	border-bottom: 4px solid #2980b9;
 	
-	background-color: #e74c3c;
+	background-color: #3498db;
 	
 	transition: background-color 100ms, border-width 100ms;
 	-o-transition: background-color 100ms, border-width 100ms;
@@ -913,11 +915,11 @@ select.ctrlInput {
 }
 
 .button:hover:not(.disabled) {
-	border-width: 0px;
+	background-color: #2980b9;
 }
 
 .button.pushed:not(.disabled) {
-	background-color: #c0392b;
+	border-width: 0px;
 }
 
 .button.disabled {

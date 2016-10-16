@@ -1817,6 +1817,7 @@ window.addEventListener('load', function() {
 	var setNav = document.getElementById('settingsNav');
 	var presetMenuOpenCloseBtn = document.getElementById('presetMenuOpenCloseBtn');
 	var presetMenu = document.getElementById('settingsPresetsMenu');
+	var allButtons = document.getElementsByClassName('button');
 	
 	document.getElementById('hambParent').addEventListener('click', function(e) {
 		setNav.classList.contains('activated') ? setNav.classList.remove('activated') : setNav.classList.add('activated');
@@ -1854,12 +1855,6 @@ window.addEventListener('load', function() {
 		thePlayer.classList.toggle('bottomMenuOpened');
 		bottomMenu.classList.toggle('opened');
 	});
-	buttonRecord.addEventListener('mousedown', function() {
-		this.classList.add('pushed');
-	});
-	buttonRecord.addEventListener('mouseup', function() {
-		this.classList.remove('pushed');
-	});
 	buttonRecord.addEventListener('click', function() {
 		if(this.classList.contains('disabled')) return;
 		
@@ -1875,6 +1870,17 @@ window.addEventListener('load', function() {
 		
 		this.innerHTML = "Stop the record";
 	});
+	
+	for(var i = 0; i < allButtons.length; i++) {
+		var b = allButtons[i];
+		
+		b.addEventListener('mousedown', function() {
+			this.classList.add('pushed');
+		});
+		b.addEventListener('mouseup', function() {
+			this.classList.remove('pushed');
+		});
+	}
 	
 	audioElement.addEventListener('ended', function() {
 		if(recorder.state === 'recording') recorder.stop();
