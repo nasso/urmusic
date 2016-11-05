@@ -381,6 +381,11 @@ function ImageSection(p) {
 	
 	this.imageURL = !isNullOrUndef(p.imageURL) ? p.imageURL : '';
 	this.imageBorderRadius = new ExpressionProperty(!isNullOrUndef(p.imageBorderRadius) ? p.imageBorderRadius : 0.0);
+	this.opaque = !isNullOrUndef(p.opaque) ? p.opaque : false;
+	this.borderSize = new ExpressionProperty(!isNullOrUndef(p.borderSize) ? p.borderSize : 0.0);
+	
+	this.borderColor = !isNullOrUndef(p.borderColor) ? p.borderColor : '#ffffff';
+	this.borderVisible = !isNullOrUndef(p.borderVisible) ? p.borderVisible : false;
 	
 	var that = this;
 	this.image = new Image();
@@ -1546,12 +1551,11 @@ window.addEventListener('load', function() {
 		}
 		
 		function renderImage() {
-			if(!sectarg.imageReady) {
-				return;
-			}
-			
+			gtx.strokeStyle = sectarg.borderColor;
+			gtx.fillStyle = section.color;
+			gtx.lineWidth = (sectarg.borderSize.value / 100) * csize;
 			gtx.shadowColor = section.color;
-			gtx.shadowBlur = glowness * glblscl;
+			gtx.shadowBlur = glowness * glblscl; // Cause for some reasons, it's not scaled by the scale. This comment doesn't make sense.
 			gtx.scale(1, -1);
 			
 			var img = sectarg.image;
@@ -1566,17 +1570,33 @@ window.addEventListener('load', function() {
 					imgBorderRad);
 				gtx.clip();
 				
-				gtx.drawImage(img,
-					-csize/2,
-					-csize/2,
-					csize,
-					csize);
+				if(sectarg.opaque) gtx.fill();
+				if(sectarg.borderVisible) gtx.stroke();
+				
+				if(sectarg.imageReady) {
+					gtx.drawImage(img,
+						-csize/2,
+						-csize/2,
+						csize,
+						csize);
+				}
 			} else {
-				gtx.drawImage(img,
+				gtx.beginPath();
+				gtx.rect(
 					-csize/2,
 					-csize/2,
 					csize,
 					csize);
+				if(sectarg.opaque) gtx.fill();
+				if(sectarg.borderVisible) gtx.stroke();
+				
+				if(sectarg.imageReady) {
+					gtx.drawImage(img,
+						-csize/2,
+						-csize/2,
+						csize,
+						csize);
+				}
 			}
 		}
 		
@@ -1920,7 +1940,7 @@ window.addEventListener('load', function() {
 	+	"| |  | |  ____\\ \\   / / | |\t" +	"Hey you! This app is highly customizable through the JavaScript\n"
 	+	"| |__| | |__   \\ \\_/ /  | |\t" +	"console too! Have fun, and try not to broke everything :p!\n"
 	+	"|  __  |  __|   \\   /   | |\t" +	"\n"
-	+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4.2\n"
+	+	"| |  | | |____   | |    |_|\t" +	"Urmusic V1.4.3\n"
 	+	"|_|  |_|______|  |_|    (_)\t" +	"By Nasso (https://nasso.github.io/)\n\n");
 	
 	loadPreset();
