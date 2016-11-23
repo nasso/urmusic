@@ -1199,9 +1199,9 @@ window.addEventListener('load', function() {
 	}
 	
 	function loop() {
-		analyser.smoothingTimeConstant = settings.smoothingTimeConstant.value;
-		lowAnalyser.smoothingTimeConstant = settings.advanced.lowpassSmooth;
-		highAnalyser.smoothingTimeConstant = settings.advanced.highpassSmooth;
+		analyser.smoothingTimeConstant = clamp(settings.smoothingTimeConstant.value, 0.0, 1.0);
+		lowAnalyser.smoothingTimeConstant = clamp(settings.advanced.lowpassSmooth, 0.0, 1.0);
+		highAnalyser.smoothingTimeConstant = clamp(settings.advanced.highpassSmooth, 0.0, 1.0);
 		
 		if(!freqData) {
 			freqData = new Float32Array(analyser.frequencyBinCount);
