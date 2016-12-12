@@ -901,7 +901,7 @@ select.ctrlInput {
 	
 	text-decoration: none;
 	
-	margin: 16px 2px;
+	margin: 0px 2px;
 	padding: 8px 16px;
 	
 	border-bottom: 4px solid #2980b9;
@@ -951,4 +951,16 @@ select.ctrlInput {
 	margin: 0px 4px;
 	
 	color: black;
+}
+
+#bottomMenuRightPart {
+	float: right;
+}
+
+#bottomMenuLeftPart {
+	float: left;
+}
+
+#bottomMenuLeftPart, #bottomMenuRightPart {
+	margin: 16px 0px;
 }
